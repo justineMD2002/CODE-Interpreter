@@ -13,6 +13,7 @@ public class Lexer {
         List<Token> tokens = new ArrayList<>();
         while (currentPos < input.length()) {
             int tokenStartPos = currentPos;
+            int temp = currentPos;
             char lookahead = input.charAt(currentPos);
             if (Character.isWhitespace(lookahead)) {
                 currentPos++;
@@ -28,19 +29,22 @@ public class Lexer {
                 tokens.add(new Token(Token.Type.Minus, Character.toString(lookahead), tokenStartPos));
                 currentPos++;
             } else if (lookahead == '>') {
-                if(input.charAt(++currentPos) == '=')
-                    tokens.add(new Token(Token.Type.GreaterEqual, Character.toString(lookahead) + input.charAt(currentPos), tokenStartPos));
-                else 
+                if(input.charAt(++temp) == '=') {
+                    tokens.add(new Token(Token.Type.GreaterEqual, Character.toString(lookahead) + input.charAt(temp), tokenStartPos));
+                    currentPos++;
+                } else {
                     tokens.add(new Token(Token.Type.Greater, Character.toString(lookahead), tokenStartPos));
-                currentPos++;
+                } currentPos++;
             } else if (lookahead == '<') {
-                if(input.charAt(++currentPos) == '=')
-                    tokens.add(new Token(Token.Type.LessEqual, Character.toString(lookahead) + input.charAt(currentPos), tokenStartPos));
-                else if(input.charAt(currentPos) == '>')
-                    tokens.add(new Token(Token.Type.NotEqual, Character.toString(lookahead) + input.charAt(currentPos), tokenStartPos));
-                else 
+                if(input.charAt(++temp) == '=') {
+                    tokens.add(new Token(Token.Type.LessEqual, Character.toString(lookahead) + input.charAt(temp), tokenStartPos));
+                    currentPos++;
+                } else if(input.charAt(temp) == '>') {
+                    tokens.add(new Token(Token.Type.NotEqual, Character.toString(lookahead) + input.charAt(temp), tokenStartPos));
+                    currentPos++;
+                } else {
                     tokens.add(new Token(Token.Type.Less, Character.toString(lookahead), tokenStartPos));
-                currentPos++;
+                } currentPos++;
             } else if (lookahead == '/') {
                 tokens.add(new Token(Token.Type.Divide, Character.toString(lookahead), tokenStartPos));
                 currentPos++;
@@ -72,11 +76,21 @@ public class Lexer {
                 tokens.add(new Token(Token.Type.Times, Character.toString(lookahead), tokenStartPos));
                 currentPos++;
             } else if (lookahead == '=') {
-                if(input.charAt(++currentPos) == '=')
-                    tokens.add(new Token(Token.Type.Equals , Character.toString(lookahead) + input.charAt(currentPos), tokenStartPos));
-                else 
+                if(input.charAt(++temp) == '=') {
+                    tokens.add(new Token(Token.Type.Equals , Character.toString(lookahead) + input.charAt(temp), tokenStartPos));
+                    currentPos++;
+                } else {
                     tokens.add(new Token(Token.Type.Assign, Character.toString(lookahead), tokenStartPos));
+                } currentPos++;
+            } else if (lookahead == '_') { 
+                StringBuilder text = new StringBuilder();
+                text.append(lookahead);
                 currentPos++;
+                while (currentPos < input.length() && (Character.isLetterOrDigit(input.charAt(currentPos)) || input.charAt(currentPos) == '_')) {
+                    text.append(input.charAt(currentPos));
+                    currentPos++;
+                }
+                tokens.add(new Token(Token.Type.Identifier, text.toString(), tokenStartPos));
             } else if (Character.isDigit(lookahead)) {
                 StringBuilder text = new StringBuilder();
                 while (currentPos < input.length() && Character.isDigit(input.charAt(currentPos))) {
@@ -119,7 +133,11 @@ public class Lexer {
                     break; 
                     case "FLOAT":
                     type = Token.Type.Float;
-                    break;      
+                    break; 
+                    case "TRUE":
+                    case "FALSE":
+                    type = Token.Type.BooleanLiteral;
+                    break;       
                     case "BEGIN CODE":
                     case "END CODE":
                         type = Token.Type.Container;
@@ -132,7 +150,6 @@ public class Lexer {
                 throw new RuntimeException("Unknown character '" + lookahead + "' at position " + currentPos);
             }
         }
-        tokens.add(new Token(Token.Type.EOF, "<EOF>", currentPos));
         printTokens(tokens);
         return tokens;
     }
