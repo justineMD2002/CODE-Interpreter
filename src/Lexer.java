@@ -111,33 +111,36 @@ public class Lexer {
                 Token.Type type;
                 switch (text.toString()) {
                     case "AND":
-                    type = Token.Type.And;
-                    break;
+                        type = Token.Type.And;
+                        break;
                     case "DISPLAY":
-                    type = Token.Type.Print;
-                    break;
+                        type = Token.Type.Print;
+                        break;
+                    case "SCAN":
+                        type = Token.Type.Scan;
+                        break;
                     case "OR":
-                    type = Token.Type.Or;
-                    break;
+                        type = Token.Type.Or;
+                        break;
                     case "NOT":
-                    type = Token.Type.Not;
-                    break;
+                        type = Token.Type.Not;
+                        break;
                     case "INT":
-                    type = Token.Type.Int;
-                    break;
+                        type = Token.Type.Int;
+                        break;
                     case "CHAR":
-                    type = Token.Type.Char;
-                    break;  
+                        type = Token.Type.Char;
+                        break;  
                     case "BOOL":
-                    type = Token.Type.Bool;
-                    break; 
+                        type = Token.Type.Bool;
+                        break; 
                     case "FLOAT":
-                    type = Token.Type.Float;
-                    break; 
+                        type = Token.Type.Float;
+                        break; 
                     case "TRUE":
                     case "FALSE":
-                    type = Token.Type.BooleanLiteral;
-                    break;       
+                        type = Token.Type.BooleanLiteral;
+                        break;       
                     case "BEGIN CODE":
                     case "END CODE":
                         type = Token.Type.Container;
