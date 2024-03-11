@@ -107,6 +107,10 @@ public class Lexer {
                         text.append(input.charAt(currentPos));
                         currentPos++;
                     }
+                    else if(text.toString().equals("ELSE") && (currentPos + 2 < input.length()) && input.substring((currentPos+1), (currentPos+3)).equals("IF")) {
+                        text.append(input.charAt(currentPos));
+                        currentPos++;
+                    }
                 }
                 Token.Type type;
                 switch (text.toString()) {
@@ -142,8 +146,31 @@ public class Lexer {
                         type = Token.Type.BooleanLiteral;
                         break;       
                     case "BEGIN CODE":
+                        type = Token.Type.BeginContainer;
+                        break;
                     case "END CODE":
-                        type = Token.Type.Container;
+                        type = Token.Type.EndContainer;
+                        break;
+                    case "BEGIN IF":
+                        type = Token.Type.BeginIf;
+                        break;
+                    case "END IF":
+                        type = Token.Type.EndIf;
+                        break;
+                    case "BEGIN WHILE":
+                        type = Token.Type.BeginWhile;
+                        break;
+                    case "END WHILE":
+                        type = Token.Type.EndWhile;
+                        break;
+                    case "ELSE IF":
+                        type = Token.Type.IfElse;
+                        break;
+                    case "IF":
+                        type = Token.Type.If;
+                        break;
+                    case "ELSE":
+                        type = Token.Type.Else;
                         break;
                     default:
                         type = Token.Type.Identifier;
@@ -163,5 +190,4 @@ public class Lexer {
             System.out.println("Token " + i + ": Type = " + token.getType() + ", Text = '" + token.getText() + "', StartPos = " + token.getStartPos());
         }
     }
-
 }

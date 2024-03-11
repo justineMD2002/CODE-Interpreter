@@ -32,8 +32,8 @@ public class Token {
 
   public enum Type {
       Num, Plus, Times, Divide, Modulo, Minus, Greater, Less, GreaterEqual, LessEqual,
-      NotEqual, Assign, And, Or, Not, Identifier, Container, Int, Bool, Char, Float, 
-      Equals, Comma, Print, Parentheses, SingleQ, DoubleQ, SquareB, Concat, NewLine, BooleanLiteral,
-      Scan, 
+      NotEqual, Assign, And, Or, Not, Identifier, BeginContainer, EndContainer, BeginIf, EndIf,
+      BeginWhile, EndWhile, Int, Bool, Char, Float, If, IfElse, Else, Equals, Comma, Print, 
+      Parentheses, SingleQ, DoubleQ, SquareB, Concat, NewLine, BooleanLiteral, Scan, 
   }
 }
