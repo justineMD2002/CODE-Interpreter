@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Lexer {
     private String input;
@@ -82,15 +84,6 @@ public class Lexer {
                 } else {
                     tokens.add(new Token(Token.Type.Assign, Character.toString(lookahead), tokenStartPos));
                 } currentPos++;
-            } else if (lookahead == '_') { 
-                StringBuilder text = new StringBuilder();
-                text.append(lookahead);
-                currentPos++;
-                while (currentPos < input.length() && (Character.isLetterOrDigit(input.charAt(currentPos)) || input.charAt(currentPos) == '_')) {
-                    text.append(input.charAt(currentPos));
-                    currentPos++;
-                }
-                tokens.add(new Token(Token.Type.Identifier, text.toString(), tokenStartPos));
             } else if (Character.isDigit(lookahead)) {
                 StringBuilder text = new StringBuilder();
                 while (currentPos < input.length() && Character.isDigit(input.charAt(currentPos))) {
