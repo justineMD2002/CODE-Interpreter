@@ -185,7 +185,7 @@ public class Lexer {
             currentPos++;
         }
         
-        tokens.add(new Token(hasDecimal ? Token.Type.Float : Token.Type.Num, text.toString(), tokenStartPos));
+        tokens.add(new Token(hasDecimal ? Token.Type.NumFloat : Token.Type.Num, text.toString(), tokenStartPos));
     }
 
     private void handleIdentifierOrKeyword(List<Token> tokens, int tokenStartPos) {
