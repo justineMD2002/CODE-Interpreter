@@ -79,6 +79,48 @@ public class Lexer {
 
         if(character == '_') handleIdentifierOrKeyword(tokens, startPos);
 
+        if(character == '\'') {
+            StringBuilder charLiteralBuilder = new StringBuilder();
+            charLiteralBuilder.append(character); 
+
+            while (currentPos + 1 < input.length() && input.charAt(currentPos + 1) != '\'') {
+                char nextChar = input.charAt(currentPos + 1);
+                charLiteralBuilder.append(nextChar);
+                currentPos++;
+            }
+
+            if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\'') {
+                charLiteralBuilder.append(input.charAt(currentPos + 1));
+                String charLiteral = charLiteralBuilder.toString();
+                tokens.add(new Token(Token.Type.CharLiteral, charLiteral, startPos));
+                currentPos += 2;
+                return;
+            } else {
+                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+            }
+        }
+
+        if(character == '\"') {
+            StringBuilder charLiteralBuilder = new StringBuilder();
+            charLiteralBuilder.append(character); 
+
+            while (currentPos + 1 < input.length() && input.charAt(currentPos + 1) != '\"') {
+                char nextChar = input.charAt(currentPos + 1);
+                charLiteralBuilder.append(nextChar);
+                currentPos++;
+            }
+
+            if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\"') {
+                charLiteralBuilder.append(input.charAt(currentPos + 1));
+                String charLiteral = charLiteralBuilder.toString();
+                tokens.add(new Token(Token.Type.BooleanLiteral, charLiteral, startPos));
+                currentPos += 2;
+                return;
+            } else {
+                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+            }
+        }
+
         switch (character) {
             case '+':
                 type = Token.Type.Plus;
@@ -93,13 +135,7 @@ public class Lexer {
             case '[':
             case ']':
                 type = Token.Type.SquareB;
-                break;
-            case '\'':
-                type = Token.Type.SingleQ;
-                break;
-            case '\"':
-                type = Token.Type.DoubleQ;
-                break;
+                break;  
             case '&':
                 type = Token.Type.Concat;
                 break;
@@ -196,6 +232,7 @@ public class Lexer {
         }
         String identifier = text.toString();
         Token.Type type;
+
         switch (identifier) {
             case "AND":
                 type = Token.Type.And;
