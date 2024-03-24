@@ -171,11 +171,21 @@ public class Lexer {
 
     private void handleNumberToken(List<Token> tokens, int tokenStartPos) {
         StringBuilder text = new StringBuilder();
-        while (currentPos < input.length() && Character.isDigit(input.charAt(currentPos))) {
-            text.append(input.charAt(currentPos));
+        boolean hasDecimal = false;
+    
+        while (currentPos < input.length() && (Character.isDigit(input.charAt(currentPos)) || input.charAt(currentPos) == '.')) {
+            char currentChar = input.charAt(currentPos);
+            if (currentChar == '.') {
+                if (hasDecimal) {
+                    throw new RuntimeException("Invalid floating-point number format at position " + currentPos);
+                }
+                hasDecimal = true;
+            }
+            text.append(currentChar);
             currentPos++;
         }
-        tokens.add(new Token(Token.Type.Num, text.toString(), tokenStartPos));
+        
+        tokens.add(new Token(hasDecimal ? Token.Type.Float : Token.Type.Num, text.toString(), tokenStartPos));
     }
 
     private void handleIdentifierOrKeyword(List<Token> tokens, int tokenStartPos) {
@@ -255,9 +265,6 @@ public class Lexer {
         tokens.add(new Token(type, identifier, tokenStartPos));
     }
     
-    
-    
-
     private void printTokens(List<Token> tokens) {
         for (int i = 0; i < tokens.size(); i++) {
             Token token = tokens.get(i);
