@@ -107,12 +107,6 @@ class Parser {
 
     // Expression -> Identifier | Num
     private boolean value() {
-        if(match(Token.Type.DoubleQ)) {
-            if(match(Token.Type.Identifier) || match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.BooleanLiteral)) {
-                return match(Token.Type.DoubleQ);
-            }
-            return false;
-        }
-        return match(Token.Type.Num) || match(Token.Type.NumFloat);
+        return match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral);
     }
 }
