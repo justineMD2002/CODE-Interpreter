@@ -17,8 +17,6 @@ class Parser {
     // matches the type of the token
     private boolean match(Token.Type expectedType) {
         if (currentTokenIndex < tokens.size() && tokens.get(currentTokenIndex).getType() == expectedType) {
-
-            System.out.println("Index: " + currentTokenIndex);
             currentTokenIndex++;
             return true;
         }
@@ -32,9 +30,7 @@ class Parser {
             if(match(Token.Type.EndContainer)) {
                 return true;
             } else {
-                System.out.println(currentTokenIndex);
                 if(variableDeclarations()) {
-                    System.out.println("true");
                     return match(Token.Type.EndContainer);
                 }
                 return false;
@@ -95,7 +91,6 @@ class Parser {
         if (match(Token.Type.Identifier)) {
             return assignment();
         }
-        System.out.println("False");
         return false;
     }
 
@@ -112,6 +107,12 @@ class Parser {
 
     // Expression -> Identifier | Num
     private boolean value() {
-        return match(Token.Type.Identifier) || match(Token.Type.Num) || match(Token.Type.NumFloat);
+        if(match(Token.Type.DoubleQ)) {
+            if(match(Token.Type.Identifier) || match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.BooleanLiteral)) {
+                return match(Token.Type.DoubleQ);
+            }
+            return false;
+        }
+        return match(Token.Type.Num) || match(Token.Type.NumFloat);
     }
 }
