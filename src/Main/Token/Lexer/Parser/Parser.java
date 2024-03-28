@@ -1,6 +1,7 @@
 package Main.Token.Lexer.Parser;
 
 import Main.ExceptionHandlers.VariableDeclarationException;
+import Main.ExceptionHandlers.VariableInitializationException;
 import Main.Nodes.*;
 import Main.Token.Token;
 
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public  class Parser {
-    private List<Token> tokens;
+    private final List<Token> tokens;
     private int currentTokenIndex;
 
     public Parser(List<Token> tokens) {
@@ -17,7 +18,7 @@ public  class Parser {
     }
 
     // call parse method to start parsing
-    public ASTNode parse() {
+    public ASTNode parse() throws VariableDeclarationException, VariableInitializationException {
         return program();
     }
 
@@ -32,7 +33,7 @@ public  class Parser {
     }
 
     // Program --> BEGIN CODE VariableDeclarations ExecutableCode END CODE
-    private ASTNode program() {
+    private ASTNode program() throws VariableDeclarationException, VariableInitializationException {
         if(match(Token.Type.BeginContainer)) {
             ASTNode variableDeclarations = variableDeclarations();
             ASTNode executableCode = executableCode();
@@ -44,7 +45,7 @@ public  class Parser {
     }
 
     // VariableDeclarations -> VariableDeclaration VariableDeclarations | ε
-    private ASTNode variableDeclarations() {
+    private ASTNode variableDeclarations() throws VariableDeclarationException, VariableInitializationException {
         List<SingleVariableDeclaration> variables = new ArrayList<>();
 
         while (true) {
@@ -55,9 +56,9 @@ public  class Parser {
                 } else {
                     break;
                 }
-            } catch (VariableDeclarationException v) {
-                System.out.println(v.getMessage());
+            } catch (VariableDeclarationException | VariableInitializationException v) {
                 v.printStackTrace();
+                throw v;
             }
         }
 
@@ -65,13 +66,13 @@ public  class Parser {
     }
 
     // VariableDeclaration -> DataType VariableList
-    private ASTNode variableDeclaration() throws VariableDeclarationException {
+    private ASTNode variableDeclaration() throws VariableDeclarationException, VariableInitializationException {
         String dataType = tokens.get(currentTokenIndex).getText();
         ASTNode variableDeclaration = null;
         if (!dataType.isEmpty() && DataType()) {
             List<String> variables = variableList();
             if(variables.isEmpty()) {
-                throw new VariableDeclarationException();
+                throw new VariableDeclarationException("Error: Found Data Type token but variable list is empty.");
             }
             variableDeclaration = new SingleVariableDeclaration(dataType, variables);
         }
@@ -79,17 +80,45 @@ public  class Parser {
     }
 
     // VariableList -> VariableName VariableList'
-    private List<String> variableList() {
+    private List<String> variableList() throws VariableDeclarationException, VariableInitializationException {
         List<String> variableNames = new ArrayList<>();
         String variableName = variableName();
-        if (!variableName.isEmpty()) {
+        if (variableName != null) {
+            /*
+                Check first for the first variable
+                Also include whether it is initialized
+                on declaration
+             */
+            Object assignmentValue = assignment();
+            LiteralNode value;
+            if(assignmentValue != null) {
+                value = new LiteralNode(assignmentValue);
+                initializeVariable(variableName, value);
+            }
+            /*
+            *  */
             variableNames.add(variableName);
-            if (match(Token.Type.Comma)) {
-                variableNames.addAll(variableList());
+            /*     */
+
+            while (match(Token.Type.Comma)) {
+                variableName = variableName();
+                if (variableName != null) {
+                    assignmentValue = assignment();
+                    if(assignmentValue != null) {
+                        value = new LiteralNode(assignmentValue);
+                        initializeVariable(variableName, value);
+                    }
+                    variableNames.add(variableName);
+                } else {
+                    throw new VariableDeclarationException("Error parsing variable declarations. " +
+                            "Found a comma token without a succeeding variable declaration");
+                }
+
             }
         }
         return variableNames;
     }
+
     // DataType -> INT | CHAR | BOOL | FLOAT
     private boolean DataType() {
         return match(Token.Type.Int) || match(Token.Type.Char) || match(Token.Type.Bool) || match(Token.Type.Float);
@@ -97,24 +126,37 @@ public  class Parser {
 
     // VariableName -> Identifier
     private String variableName() {
-        String variableName = tokens.get(currentTokenIndex).getText();
+        String variableName = null;
         if (match(Token.Type.Identifier)) {
-
+            variableName = tokens.get(currentTokenIndex - 1).getText(); // Get the variable name
         }
-        return false;
+        return variableName;
     }
 
     // Assignment -> '=' Expression
-    private ASTNode assignment() {
+    private Object assignment() throws VariableInitializationException {
         if (match(Token.Type.Assign)) {
-            return value();
+            if(value() != null) {
+                return value();
+            }
+            throw new VariableInitializationException("Assignment operator found but " +
+                    "value token is missing. Please check again");
         }
-        return true;
+        return null;
     }
 
     // Expression -> Num | NumFloat | CharLiteral | BooleanLiteral
-    private boolean value() {
-        return match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral);
+    private Object value() {
+        if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+            return tokens.get(currentTokenIndex - 1).getText();
+        }
+        return null;
+    }
+
+    // variable initializer
+    private void initializeVariable(String varName, LiteralNode value) {
+        VariableInitializerNode variableInitializer = new VariableInitializerNode();
+        variableInitializer.setValue(varName, value);
     }
 
     private ASTNode executableCode() {

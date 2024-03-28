@@ -1,5 +1,7 @@
 package Main.Token.Lexer;
 
+import Main.Token.Token;
+
 import java.util.ArrayList;
 import java.util.List;
 
