@@ -1,3 +1,5 @@
+package Main.Token;
+
 public class Token {
   private Type tpe;
   private String text;
