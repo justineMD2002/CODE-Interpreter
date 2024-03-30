@@ -1,5 +1,7 @@
 package Main;
 
+import Main.Nodes.ASTNode;
+import Main.Nodes.ProgramNode;
 import Main.Token.Lexer.Lexer;
 import Main.Token.Lexer.Parser.Parser;
 import Main.Token.Token;
@@ -26,10 +28,14 @@ public class App {
             List<Token> tokens = lexer.lex();
             Parser parser = new Parser(tokens);
             try {
-                parser.parse();
-                System.out.println("Parsing complete");
-            } catch (Exception e){
-                System.out.println("There was an error parsing your code");
+                ASTNode parsedNode = parser.parse();
+                if (parsedNode instanceof ProgramNode programNode) {
+                    programNode.displayOutput();
+                }
+                System.out.println("Parsing complete\n\n");
+            } catch (Exception e) {
+                System.err.println("Error parsing code:");
+                e.printStackTrace();
             }
         }
         scan.close();

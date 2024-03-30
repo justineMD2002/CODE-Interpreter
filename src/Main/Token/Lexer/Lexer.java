@@ -26,6 +26,7 @@ public class Lexer {
                 case '#':
                     skipComment();
                     break;
+                case ':':
                 case '+':
                 case '-':
                 case '(':
@@ -68,7 +69,7 @@ public class Lexer {
                     }
             }
         }
-        printTokens(tokens);
+//        printTokens(tokens);
         return tokens;
     }
 
@@ -126,6 +127,9 @@ public class Lexer {
         }
 
         switch (character) {
+            case ':':
+                type = Token.Type.Colon;
+                break;
             case '+':
                 type = Token.Type.Plus;
                 break;

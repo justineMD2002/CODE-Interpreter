@@ -1,16 +1,16 @@
 package Main.Token.Lexer.Parser;
 
-import Main.ExceptionHandlers.VariableDeclarationException;
-import Main.ExceptionHandlers.VariableInitializationException;
+import Main.ExceptionHandlers.*;
 import Main.Nodes.*;
 import Main.Token.Token;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public  class Parser {
     private final List<Token> tokens;
     private int currentTokenIndex;
+    private final VariableInitializerNode variableInitializer = new VariableInitializerNode();
+
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -18,7 +18,7 @@ public  class Parser {
     }
 
     // call parse method to start parsing
-    public ASTNode parse() throws VariableDeclarationException, VariableInitializationException {
+    public ASTNode parse() throws VariableDeclarationException, VariableInitializationException, DisplayException {
         return program();
     }
 
@@ -33,7 +33,7 @@ public  class Parser {
     }
 
     // Program --> BEGIN CODE VariableDeclarations ExecutableCode END CODE
-    private ASTNode program() throws VariableDeclarationException, VariableInitializationException {
+    private ASTNode program() throws VariableDeclarationException, VariableInitializationException, DisplayException {
         if(match(Token.Type.BeginContainer)) {
             ASTNode variableDeclarations = variableDeclarations();
             ASTNode executableCode = executableCode();
@@ -70,7 +70,9 @@ public  class Parser {
         String dataType = tokens.get(currentTokenIndex).getText();
         ASTNode variableDeclaration = null;
         if (!dataType.isEmpty() && DataType()) {
+//            System.out.println("dtype:" + dataType);
             List<String> variables = variableList();
+//            System.out.println("variables:" + variables);
             if(variables.isEmpty()) {
                 throw new VariableDeclarationException("Error: Found Data Type token but variable list is empty.");
             }
@@ -92,6 +94,7 @@ public  class Parser {
             Object assignmentValue = assignment();
             LiteralNode value;
             if(assignmentValue != null) {
+//                System.out.println("not null");
                 value = new LiteralNode(assignmentValue);
                 initializeVariable(variableName, value);
             }
@@ -105,6 +108,7 @@ public  class Parser {
                 if (variableName != null) {
                     assignmentValue = assignment();
                     if(assignmentValue != null) {
+//                        System.out.println(variableName + "=" + assignmentValue);
                         value = new LiteralNode(assignmentValue);
                         initializeVariable(variableName, value);
                     }
@@ -136,8 +140,10 @@ public  class Parser {
     // Assignment -> '=' Expression
     private Object assignment() throws VariableInitializationException {
         if (match(Token.Type.Assign)) {
-            if(value() != null) {
-                return value();
+//            System.out.println("assignment");
+            Object assignedValue = value();
+            if(assignedValue != null) {
+                return assignedValue;
             }
             throw new VariableInitializationException("Assignment operator found but " +
                     "value token is missing. Please check again");
@@ -155,11 +161,35 @@ public  class Parser {
 
     // variable initializer
     private void initializeVariable(String varName, LiteralNode value) {
-        VariableInitializerNode variableInitializer = new VariableInitializerNode();
         variableInitializer.setValue(varName, value);
     }
 
-    private ASTNode executableCode() {
+    private ASTNode executableCode() throws DisplayException {
+        return displayFunction();
+    }
+
+    private DisplayNode displayFunction() throws DisplayException {
+        if(match(Token.Type.Print)) {
+            StringBuilder stringBuilder = new StringBuilder();
+            if(match(Token.Type.Colon)) {
+                while(match(Token.Type.Identifier)) {
+                    String variableName = tokens.get(currentTokenIndex - 1).getText();
+                    LiteralNode value = variableInitializer.getValue(variableName);
+
+                    if (value != null) {
+                        stringBuilder.append(value.getValue()); // Append the value to the StringBuilder
+                    } else {
+                        throw new DisplayException("Variable '" + variableName + "' is not initialized.");
+                    }
+
+                    if (!match(Token.Type.Concat)) {
+                        break;
+                    }
+                }
+                return new DisplayNode(stringBuilder.toString());
+            }
+
+        }
         return null;
     }
 }
