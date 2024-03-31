@@ -86,7 +86,6 @@ public class Lexer {
 
         if(character == '\'') {
             StringBuilder charLiteralBuilder = new StringBuilder();
-            charLiteralBuilder.append(character); 
 
             while (currentPos + 1 < input.length() && input.charAt(currentPos + 1) != '\'') {
                 char nextChar = input.charAt(currentPos + 1);
@@ -95,7 +94,6 @@ public class Lexer {
             }
 
             if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\'') {
-                charLiteralBuilder.append(input.charAt(currentPos + 1));
                 String charLiteral = charLiteralBuilder.toString();
                 tokens.add(new Token(Token.Type.CharLiteral, charLiteral, startPos));
                 currentPos += 2;
@@ -107,7 +105,6 @@ public class Lexer {
 
         if(character == '\"') {
             StringBuilder charLiteralBuilder = new StringBuilder();
-            charLiteralBuilder.append(character); 
 
             while (currentPos + 1 < input.length() && input.charAt(currentPos + 1) != '\"') {
                 char nextChar = input.charAt(currentPos + 1);
@@ -116,7 +113,6 @@ public class Lexer {
             }
 
             if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\"') {
-                charLiteralBuilder.append(input.charAt(currentPos + 1));
                 String charLiteral = charLiteralBuilder.toString();
                 tokens.add(new Token(Token.Type.BooleanLiteral, charLiteral, startPos));
                 currentPos += 2;

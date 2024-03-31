@@ -12,15 +12,21 @@ public  class Parser {
     private final VariableInitializerNode variableInitializer = new VariableInitializerNode();
 
 
+
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
         currentTokenIndex = 0;
     }
 
+
+
     // call parse method to start parsing
-    public ASTNode parse() throws VariableDeclarationException, VariableInitializationException, DisplayException {
+    public ASTNode parse() throws VariableDeclarationException, VariableInitializationException, DisplayException, BeginContainerMissingException, EndContainerMissingException {
         return program();
     }
+
+
+
 
     // matches the type of the token
     private boolean match(Token.Type expectedType) {
@@ -32,17 +38,26 @@ public  class Parser {
         return false;
     }
 
+
+
+
+
     // Program --> BEGIN CODE VariableDeclarations ExecutableCode END CODE
-    private ASTNode program() throws VariableDeclarationException, VariableInitializationException, DisplayException {
+    private ASTNode program() throws VariableDeclarationException, VariableInitializationException, DisplayException, BeginContainerMissingException, EndContainerMissingException {
         if(match(Token.Type.BeginContainer)) {
             ASTNode variableDeclarations = variableDeclarations();
             ASTNode executableCode = executableCode();
             if(match(Token.Type.EndContainer)) {
                 return new ProgramNode(variableDeclarations, executableCode);
+            } else {
+                throw new EndContainerMissingException("Code should end with an \"END CODE\" syntax.");
             }
+        } else {
+            throw new BeginContainerMissingException("Code should begin with a \"BEGIN CODE\" syntax.");
         }
-        return null;
     }
+
+
 
     // VariableDeclarations -> VariableDeclaration VariableDeclarations | ε
     private ASTNode variableDeclarations() throws VariableDeclarationException, VariableInitializationException {
@@ -65,6 +80,9 @@ public  class Parser {
         return new VariableDeclarationsNode(variables);
     }
 
+
+
+
     // VariableDeclaration -> DataType VariableList
     private ASTNode variableDeclaration() throws VariableDeclarationException, VariableInitializationException {
         String dataType = tokens.get(currentTokenIndex).getText();
@@ -73,6 +91,9 @@ public  class Parser {
 //            System.out.println("dtype:" + dataType);
             List<String> variables = variableList();
 //            System.out.println("variables:" + variables);
+            for(String variable : variables) {
+                validateAssignmentType(dataType, variable);
+            }
             if(variables.isEmpty()) {
                 throw new VariableDeclarationException("Error: Found Data Type token but variable list is empty.");
             }
@@ -80,6 +101,9 @@ public  class Parser {
         }
         return variableDeclaration;
     }
+
+
+
 
     // VariableList -> VariableName VariableList'
     private List<String> variableList() throws VariableDeclarationException, VariableInitializationException {
@@ -99,7 +123,7 @@ public  class Parser {
                 initializeVariable(variableName, value);
             }
             /*
-            *  */
+             *  */
             variableNames.add(variableName);
             /*     */
 
@@ -123,10 +147,15 @@ public  class Parser {
         return variableNames;
     }
 
+
+
     // DataType -> INT | CHAR | BOOL | FLOAT
     private boolean DataType() {
         return match(Token.Type.Int) || match(Token.Type.Char) || match(Token.Type.Bool) || match(Token.Type.Float);
     }
+
+
+
 
     // VariableName -> Identifier
     private String variableName() {
@@ -136,6 +165,9 @@ public  class Parser {
         }
         return variableName;
     }
+
+
+
 
     // Assignment -> '=' Expression
     private Object assignment() throws VariableInitializationException {
@@ -151,13 +183,63 @@ public  class Parser {
         return null;
     }
 
+
+
+
     // Expression -> Num | NumFloat | CharLiteral | BooleanLiteral
     private Object value() {
+        String value = tokens.get(currentTokenIndex).getText();
         if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
-            return tokens.get(currentTokenIndex - 1).getText();
+            return value;
         }
         return null;
     }
+
+
+
+
+    private void validateAssignmentType(String dataType, String variable) throws VariableInitializationException {
+        LiteralNode valueNode = variableInitializer.getValue(variable);
+        if (valueNode != null) {
+            Object assignedValue = valueNode.getValue();
+            if (assignedValue != null) {
+                // Check if the assigned value matches the data type
+                if ("INT".equals(dataType)) {
+                    try {
+                        int intValue = Integer.parseInt(String.valueOf(assignedValue));
+                        // The assigned value can be parsed as an int, so it matches the data type INT
+                    } catch (NumberFormatException e) {
+                        throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' is not a valid integer.");
+                    }
+                } else if ("CHAR".equals(dataType)) {
+                    if (!(assignedValue instanceof Character)) {
+                        throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type CHAR.");
+                    }
+                } else if ("BOOL".equals(dataType)) {
+                    if (!(assignedValue.equals("FALSE")||assignedValue.equals("TRUE"))) {
+                        throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type BOOL.");
+                    }
+                } else if ("FLOAT".equals(dataType)) {
+                    try {
+                        double floatValue = Double.parseDouble(String.valueOf(assignedValue));
+                        // The assigned value can be parsed as a double, so it matches the data type FLOAT
+                    } catch (NumberFormatException e) {
+                        throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' is not a valid float.");
+                    }
+                } else {
+                    throw new VariableInitializationException("Error: Unsupported data type '" + dataType + "'.");
+                }
+            }
+        } else {
+            // Variable is declared but not initialized
+            System.out.println("Warning: Variable '" + variable + "' is declared but not initialized.");
+        }
+    }
+
+
+
+
+
 
     // variable initializer
     private void initializeVariable(String varName, LiteralNode value) {
