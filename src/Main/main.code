@@ -1,3 +1,4 @@
 BEGIN CODE
+    INT x=2, and
     DISPLAY: x
 END CODE

@@ -59,6 +59,22 @@ public  class Parser {
 
 
 
+    public static final Set<String> RESERVED_WORDS = new HashSet<>(Arrays.asList(
+            "BEGIN", "CODE", "END", "INT", "CHAR", "BOOL", "FLOAT", "DISPLAY",
+            "THEN", "ELSE", "IF", "WHILE", "AND", "OR", "NOT", "TRUE", "FALSE", "SCAN"
+    ));
+
+
+    private boolean isReservedWord(String token) {
+        return RESERVED_WORDS.contains(token.toUpperCase());
+    }
+
+    // Method to check if a variable name is a reserved word
+    private boolean isReservedVariable(String variableName) {
+        return isReservedWord(variableName);
+    }
+
+
     // VariableDeclarations -> VariableDeclaration VariableDeclarations | ε
     private ASTNode variableDeclarations() throws VariableDeclarationException, VariableInitializationException {
         List<SingleVariableDeclaration> variables = new ArrayList<>();
@@ -92,6 +108,9 @@ public  class Parser {
             List<String> variables = variableList();
 //            System.out.println("variables:" + variables);
             for(String variable : variables) {
+                if(isReservedVariable(variable.toLowerCase())) {
+                    throw new VariableDeclarationException("Error: Variable name '" + variable + "' is a reserved word.");
+                }
                 validateAssignmentType(dataType, variable);
             }
             if(variables.isEmpty()) {
@@ -110,6 +129,9 @@ public  class Parser {
         List<String> variableNames = new ArrayList<>();
         String variableName = variableName();
         if (variableName != null) {
+            if(isReservedVariable(variableName.toLowerCase())) {
+                throw new VariableDeclarationException("Error: Variable name '" + variableName + "' is a reserved word.");
+            }
             /*
                 Check first for the first variable
                 Also include whether it is initialized
@@ -130,6 +152,9 @@ public  class Parser {
             while (match(Token.Type.Comma)) {
                 variableName = variableName();
                 if (variableName != null) {
+                    if(isReservedVariable(variableName.toLowerCase())) {
+                        throw new VariableDeclarationException("Error: Variable name '" + variableName + "' is a reserved word.");
+                    }
                     assignmentValue = assignment();
                     if(assignmentValue != null) {
 //                        System.out.println(variableName + "=" + assignmentValue);
@@ -142,6 +167,12 @@ public  class Parser {
                             "Found a comma token without a succeeding variable declaration");
                 }
 
+            }
+        } else {
+            // If variableName is null, it means no variable was declared.
+            // Check if it's because a reserved word was encountered.
+            if (match(Token.Type.Identifier) && isReservedVariable(tokens.get(currentTokenIndex - 1).getText().toLowerCase())) {
+                throw new VariableDeclarationException("Error: Variable name '" + tokens.get(currentTokenIndex - 1).getText() + "' is a reserved word.");
             }
         }
         return variableNames;
@@ -161,7 +192,7 @@ public  class Parser {
     private String variableName() {
         String variableName = null;
         if (match(Token.Type.Identifier)) {
-            variableName = tokens.get(currentTokenIndex - 1).getText(); // Get the variable name
+            variableName = tokens.get(currentTokenIndex - 1).getText();
         }
         return variableName;
     }
@@ -204,30 +235,35 @@ public  class Parser {
             Object assignedValue = valueNode.getValue();
             if (assignedValue != null) {
                 // Check if the assigned value matches the data type
-                if ("INT".equals(dataType)) {
-                    try {
-                        int intValue = Integer.parseInt(String.valueOf(assignedValue));
-                        // The assigned value can be parsed as an int, so it matches the data type INT
-                    } catch (NumberFormatException e) {
-                        throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' is not a valid integer.");
+                switch (dataType) {
+                    case "INT" -> {
+                        try {
+                            int intValue = Integer.parseInt(String.valueOf(assignedValue));
+                            // The assigned value can be parsed as an int, so it matches the data type INT
+                        } catch (NumberFormatException e) {
+                            throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' is not a valid integer.");
+                        }
                     }
-                } else if ("CHAR".equals(dataType)) {
-                    if (!(assignedValue instanceof Character)) {
-                        throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type CHAR.");
+                    case "CHAR" -> {
+                        if (!(assignedValue instanceof Character)) {
+                            throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type CHAR.");
+                        }
                     }
-                } else if ("BOOL".equals(dataType)) {
-                    if (!(assignedValue.equals("FALSE")||assignedValue.equals("TRUE"))) {
-                        throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type BOOL.");
+                    case "BOOL" -> {
+                        if (!(assignedValue.equals("FALSE") || assignedValue.equals("TRUE"))) {
+                            throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type BOOL.");
+                        }
                     }
-                } else if ("FLOAT".equals(dataType)) {
-                    try {
-                        double floatValue = Double.parseDouble(String.valueOf(assignedValue));
-                        // The assigned value can be parsed as a double, so it matches the data type FLOAT
-                    } catch (NumberFormatException e) {
-                        throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' is not a valid float.");
+                    case "FLOAT" -> {
+                        try {
+                            double floatValue = Double.parseDouble(String.valueOf(assignedValue));
+                            // The assigned value can be parsed as a double, so it matches the data type FLOAT
+                        } catch (NumberFormatException e) {
+                            throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' is not a valid float.");
+                        }
                     }
-                } else {
-                    throw new VariableInitializationException("Error: Unsupported data type '" + dataType + "'.");
+                    case null, default ->
+                            throw new VariableInitializationException("Error: Unsupported data type '" + dataType + "'.");
                 }
             }
         } else {
