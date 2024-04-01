@@ -6,11 +6,10 @@ import Main.Token.Token;
 
 import java.util.*;
 
-public  class Parser {
+public class Parser {
     private final List<Token> tokens;
     private int currentTokenIndex;
     private final VariableInitializerNode variableInitializer = new VariableInitializerNode();
-
 
 
     public Parser(List<Token> tokens) {
@@ -22,7 +21,7 @@ public  class Parser {
 
     // call parse method to start parsing
     public ASTNode parse() throws VariableDeclarationException, VariableInitializationException, DisplayException, BeginContainerMissingException, EndContainerMissingException {
-        return program();
+            return program();
     }
 
 
@@ -46,10 +45,13 @@ public  class Parser {
     private ASTNode program() throws VariableDeclarationException, VariableInitializationException, DisplayException, BeginContainerMissingException, EndContainerMissingException {
         if(match(Token.Type.BeginContainer)) {
             ASTNode variableDeclarations = variableDeclarations();
+            reinitializeVariable((VariableDeclarationsNode) variableDeclarations);
             ASTNode executableCode = executableCode();
             if(match(Token.Type.EndContainer)) {
                 return new ProgramNode(variableDeclarations, executableCode);
             } else {
+                System.out.println(currentTokenIndex);
+                System.out.println(tokens.get(currentTokenIndex).getType());
                 throw new EndContainerMissingException("Code should end with an \"END CODE\" syntax.");
             }
         } else {
@@ -92,7 +94,6 @@ public  class Parser {
                 throw v;
             }
         }
-
         return new VariableDeclarationsNode(variables);
     }
 
@@ -218,8 +219,20 @@ public  class Parser {
 
 
     // Expression -> Num | NumFloat | CharLiteral | BooleanLiteral
-    private Object value() {
+    private Object value() throws VariableInitializationException {
         String value = tokens.get(currentTokenIndex).getText();
+        if(match(Token.Type.Identifier) ) {
+            String variableName = tokens.get(currentTokenIndex - 1).getText();
+            if(tokens.get(currentTokenIndex).getType() != Token.Type.Assign) {
+                if (variableInitializer.getValue(variableName) != null) {
+                    return variableInitializer.getValue(variableName).getValue();
+                } else {
+                    throw new VariableInitializationException("Variable " + variableName + " has not been declared nor initialized.");
+                }
+            } else {
+                return "continue";
+            }
+        }
         if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
             return value;
         }
@@ -266,13 +279,8 @@ public  class Parser {
                             throw new VariableInitializationException("Error: Unsupported data type '" + dataType + "'.");
                 }
             }
-        } else {
-            // Variable is declared but not initialized
-            System.out.println("Warning: Variable '" + variable + "' is declared but not initialized.");
         }
     }
-
-
 
 
 
@@ -282,11 +290,45 @@ public  class Parser {
         variableInitializer.setValue(varName, value);
     }
 
+
+
     private ASTNode executableCode() throws DisplayException {
         return displayFunction();
     }
 
+
+
+    private void reinitializeVariable(VariableDeclarationsNode declarationStatements) throws VariableInitializationException {
+        for(SingleVariableDeclaration declaration : declarationStatements.getVariableDeclarations() ) {
+            String dataType = declaration.getDataType();
+            while(match(Token.Type.Identifier)) {
+                List<String> dominoInitializedVariables = new ArrayList<>();
+                String varName = tokens.get(currentTokenIndex-1).getText();
+                if(declaration.getVariableNames().contains(varName)) {
+                    dominoInitializedVariables.add(varName);
+                    Object assignedValue = assignment();
+                    LiteralNode literalNode;
+                    if(assignedValue != null) {
+                        while(assignedValue == "continue") {
+                            dominoInitializedVariables.add(tokens.get(currentTokenIndex-1).getText());
+                            assignedValue = assignment();
+                        }
+                        literalNode = new LiteralNode(assignedValue);
+
+                        for (String dominoInitializedVariable : dominoInitializedVariables) {
+                            initializeVariable(dominoInitializedVariable, literalNode);
+                        }
+                    }
+                }
+                validateAssignmentType(dataType, varName);
+            }
+        }
+    }
+
+
+
     private DisplayNode displayFunction() throws DisplayException {
+
         if(match(Token.Type.Print)) {
             StringBuilder stringBuilder = new StringBuilder();
             if(match(Token.Type.Colon)) {

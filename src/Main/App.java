@@ -20,17 +20,16 @@ public class App {
             while ((line = reader.readLine()) != null) {
                 fileContent.append(line).append("\n");
             }
-
             Lexer lexer = new Lexer(fileContent.toString());
             List<Token> tokens = lexer.lex();
             Parser parser = new Parser(tokens);
             ASTNode parsedNode = parser.parse();
-            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(tokens);
-            semanticAnalyzer.analyze();
+//            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(tokens);
+//            semanticAnalyzer.analyze();
             if (parsedNode instanceof ProgramNode programNode) {
                 programNode.displayOutput();
             }
-            System.out.println("Parsing complete");
+            System.out.println("\nParsing complete");
         } catch (IOException e) {
             System.err.println("Error reading file:");
             e.printStackTrace();

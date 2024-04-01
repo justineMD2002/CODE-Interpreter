@@ -1,5 +1,8 @@
 package Main.Token.Lexer.Parser;
 
+import Main.ExceptionHandlers.*;
+import Main.Nodes.ASTNode;
+import Main.Nodes.ProgramNode;
 import Main.Token.Token;
 
 import java.util.HashMap;
@@ -10,14 +13,17 @@ public class SemanticAnalyzer {
     private final List<Token> tokens;
     private int currentTokenIndex;
     private final Map<String, Object> symbolTable;
-
-    public SemanticAnalyzer(List<Token> tokens) {
+    public SemanticAnalyzer(List<Token> tokens) throws VariableDeclarationException {
         this.tokens = tokens;
-        this.currentTokenIndex = 0;
+        setCurrentTokenIndex(0);
         this.symbolTable = new HashMap<>();
     }
 
-    public void analyze() {
+    public void setCurrentTokenIndex(int index) {
+        this.currentTokenIndex = index;
+    }
+
+    public void analyze() throws VariableDeclarationException, BeginContainerMissingException, VariableInitializationException, EndContainerMissingException, DisplayException {
         // Ensure the program starts with 'BEGIN CODE' and ends with 'END CODE'
         if (!tokens.get(0).getType().equals(Token.Type.BeginContainer) ||
         !tokens.get(tokens.size() - 1).getType().equals(Token.Type.EndContainer)) {
@@ -27,7 +33,6 @@ public class SemanticAnalyzer {
 
         // Start analysis from the second token, skipping 'BEGIN CODE'
         currentTokenIndex = 1;
-
         while (currentTokenIndex < tokens.size() - 1) { // Skip the last token 'END CODE'
             Token token = tokens.get(currentTokenIndex);
 
@@ -47,7 +52,10 @@ public class SemanticAnalyzer {
                        token.getType() == Token.Type.Divide ||
                        token.getType() == Token.Type.Modulo) {
                 handleArithmeticOperation(token);
-            } else {
+            } else if(token.getType() == Token.Type.Colon) {
+                continue;
+            }
+            else {
                 throw new RuntimeException("Unexpected token type: " + token.getType());
             }
 
