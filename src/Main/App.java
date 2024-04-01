@@ -4,6 +4,7 @@ import Main.Nodes.ASTNode;
 import Main.Nodes.ProgramNode;
 import Main.Token.Lexer.Lexer;
 import Main.Token.Lexer.Parser.Parser;
+import Main.Token.Lexer.Parser.SemanticAnalyzer;
 import Main.Token.Token;
 
 import java.io.BufferedReader;
@@ -24,6 +25,8 @@ public class App {
             List<Token> tokens = lexer.lex();
             Parser parser = new Parser(tokens);
             ASTNode parsedNode = parser.parse();
+            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(tokens);
+            semanticAnalyzer.analyze();
             if (parsedNode instanceof ProgramNode programNode) {
                 programNode.displayOutput();
             }
