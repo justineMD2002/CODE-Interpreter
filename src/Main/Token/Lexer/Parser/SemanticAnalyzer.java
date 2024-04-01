@@ -19,10 +19,11 @@ public class SemanticAnalyzer {
 
     public void analyze() {
         // Ensure the program starts with 'BEGIN CODE' and ends with 'END CODE'
-        if (!tokens.get(currentTokenIndex).getType().equals(Token.Type.BeginContainer) ||
-            !tokens.get(currentTokenIndex).getType().equals(Token.Type.EndContainer)) {
-            throw new RuntimeException("Program must start with 'BEGIN CODE' and end with 'END CODE'");
-        }
+        if (!tokens.get(0).getType().equals(Token.Type.BeginContainer) ||
+        !tokens.get(tokens.size() - 1).getType().equals(Token.Type.EndContainer)) {
+        throw new RuntimeException("Program must start with 'BEGIN CODE' and end with 'END CODE'");
+    }
+
 
         // Start analysis from the second token, skipping 'BEGIN CODE'
         currentTokenIndex = 1;
