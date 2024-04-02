@@ -1,9 +1,12 @@
 # asjfajklsdklas
 BEGIN CODE
     INT x=2,y,z=5
-    # x = 3
+    CHAR t='d'
+    BOOL _a = "TRUE"
+    #FLOAT xz = 12.09
+    # # # x = 3
     # y = x
     # z = x
-    y=z=x
-    DISPLAY: y
+    y=x=z=x
+    DISPLAY: x & y & z
 END CODE

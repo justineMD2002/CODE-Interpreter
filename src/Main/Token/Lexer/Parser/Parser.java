@@ -221,19 +221,20 @@ public class Parser {
     // Expression -> Num | NumFloat | CharLiteral | BooleanLiteral
     private Object value() throws VariableInitializationException {
         String value = tokens.get(currentTokenIndex).getText();
-        if(match(Token.Type.Identifier) ) {
+         if(match(Token.Type.Identifier) ) {
             String variableName = tokens.get(currentTokenIndex - 1).getText();
-            if(tokens.get(currentTokenIndex).getType() != Token.Type.Assign) {
+            if(!match(Token.Type.Assign)) {
                 if (variableInitializer.getValue(variableName) != null) {
                     return variableInitializer.getValue(variableName).getValue();
                 } else {
                     throw new VariableInitializationException("Variable " + variableName + " has not been declared nor initialized.");
                 }
             } else {
+                currentTokenIndex--;
                 return "continue";
             }
         }
-        if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+         if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
             return value;
         }
         return null;
@@ -258,7 +259,7 @@ public class Parser {
                         }
                     }
                     case "CHAR" -> {
-                        if (!(assignedValue instanceof Character)) {
+                        if (!(assignedValue instanceof String)) {
                             throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type CHAR.");
                         }
                     }
@@ -302,11 +303,12 @@ public class Parser {
         for(SingleVariableDeclaration declaration : declarationStatements.getVariableDeclarations() ) {
             String dataType = declaration.getDataType();
             while(match(Token.Type.Identifier)) {
+
                 List<String> dominoInitializedVariables = new ArrayList<>();
                 String varName = tokens.get(currentTokenIndex-1).getText();
                 if(declaration.getVariableNames().contains(varName)) {
                     dominoInitializedVariables.add(varName);
-                    Object assignedValue = assignment();
+                    Object assignedValue = assignment(); // currentIndex += 2
                     LiteralNode literalNode;
                     if(assignedValue != null) {
                         while(assignedValue == "continue") {
@@ -320,6 +322,7 @@ public class Parser {
                         }
                     }
                 }
+
                 validateAssignmentType(dataType, varName);
             }
         }
