@@ -45,15 +45,11 @@ public class Parser {
         if(match(Token.Type.BeginContainer)) {
             ASTNode variableDeclarations = variableDeclarations();
             reinitializeVariable((VariableDeclarationsNode) variableDeclarations);
+            ASTNode displayNodes = executableCode();
             ASTNode executableCode = executableCode();
-
-            if(match(Token.Type.SquareBOpen)) {
-                System.out.println("test");
-            }
-
             if(match(Token.Type.EndContainer)) {
                 if(tokens.size() == currentTokenIndex) {
-                    return new ProgramNode(variableDeclarations, executableCode);
+                    return new ProgramNode(variableDeclarations, displayNodes);
                 } else {
                     throw new EndContainerMissingException("END CODE reached but found more tokens.");
                 }
@@ -321,7 +317,7 @@ public class Parser {
 
 
 
-    private ASTNode executableCode() throws DisplayException, VariableInitializationException {
+    private ASTNode executableCode() throws DisplayException {
         return displayFunction();
     }
 

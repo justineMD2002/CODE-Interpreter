@@ -1,5 +1,7 @@
 package Main.Nodes;
 
+import java.util.List;
+
 public class ProgramNode extends ASTNode {
     private final ASTNode variableDeclarations;
     private final ASTNode executableCode;
@@ -18,8 +20,8 @@ public class ProgramNode extends ASTNode {
     }
 
     public void displayOutput() {
-        if(executableCode instanceof DisplayNode displayNode) {
-            System.out.println(displayNode.getOutput());
+        if(executableCode instanceof DisplayNode) {
+            System.out.println(((DisplayNode) executableCode).getOutput());
         }
     }
 

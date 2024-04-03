@@ -1,6 +1,7 @@
 BEGIN CODE
 INT x = 5
 CHAR c= 't'
-CHAR c = 'a'
+DISPLAY: x
 DISPLAY: c
+DISPLAY: "TRUE"
 END CODE
