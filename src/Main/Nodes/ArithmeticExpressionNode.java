@@ -30,26 +30,77 @@ public class ArithmeticExpressionNode extends ASTNode {
         LiteralNode leftValueNode = evaluate(getLeftOperand());
         LiteralNode rightValueNode = evaluate(getRightOperand());
 
-        int leftValue = Integer.parseInt(leftValueNode.getValue().toString());
-        int rightValue = Integer.parseInt(rightValueNode.getValue().toString());
+        Object leftValue = leftValueNode.getValue();
+        Object rightValue = rightValueNode.getValue();
 
-        System.out.println(leftValue + " " + getOperator() + " " + rightValue);
+        if (leftValue instanceof Integer && rightValue instanceof Integer) {
+            int intResult = evaluateIntExpression((int) leftValue, (int) rightValue);
+            return new LiteralNode(intResult);
+        } else if (leftValue instanceof Float || rightValue instanceof Float) {
+            float doubleResult = evaluateDoubleExpression(leftValue, rightValue);
+            return new LiteralNode(doubleResult);
+        } else {
+            throw new IllegalArgumentException("Unsupported operand types: " + leftValue.getClass().getSimpleName() + " and " + rightValue.getClass().getSimpleName());
+        }
+    }
 
-        int result = switch (getOperator()) {
-            case Plus -> leftValue + rightValue;
-            case Minus -> leftValue - rightValue;
-            case Times -> leftValue * rightValue;
+    private int evaluateIntExpression(int leftValue, int rightValue) {
+        switch (getOperator()) {
+            case Plus -> {
+                return leftValue + rightValue;
+            }
+            case Minus -> {
+                return leftValue - rightValue;
+            }
+            case Times -> {
+                return leftValue * rightValue;
+            }
             case Divide -> {
                 if (rightValue == 0) {
                     throw new ArithmeticException("Division by zero");
                 }
-                yield leftValue / rightValue;
+                return leftValue / rightValue;
+            }
+            case Modulo -> {
+                if (rightValue == 0) {
+                    throw new ArithmeticException("Division by zero");
+                }
+                return leftValue % rightValue;
             }
             // Handle other operators if needed
-            default -> throw new IllegalArgumentException("Unsupported operator: " + operator);
-        };
+            default -> throw new IllegalArgumentException("Unsupported operator: " + getOperator());
+        }
+    }
 
-        return new LiteralNode(result);
+    private float evaluateDoubleExpression(Object leftValue, Object rightValue) {
+        float leftDouble = leftValue instanceof Float ? (float) leftValue : (int) leftValue;
+        float rightDouble = rightValue instanceof Float ? (float) rightValue : (int) rightValue;
+
+        switch (getOperator()) {
+            case Plus -> {
+                return leftDouble + rightDouble;
+            }
+            case Minus -> {
+                return leftDouble - rightDouble;
+            }
+            case Times -> {
+                return leftDouble * rightDouble;
+            }
+            case Divide -> {
+                if (rightDouble == 0.0) {
+                    throw new ArithmeticException("Division by zero");
+                }
+                return leftDouble / rightDouble;
+            }
+            case Modulo -> {
+                if (rightDouble == 0.0) {
+                    throw new ArithmeticException("Division by zero");
+                }
+                return leftDouble % rightDouble;
+            }
+            // Handle other operators if needed
+            default -> throw new IllegalArgumentException("Unsupported operator: " + getOperator());
+        }
     }
 
     private LiteralNode evaluate(ASTNode expression) {
@@ -60,4 +111,5 @@ public class ArithmeticExpressionNode extends ASTNode {
         }
         throw new IllegalArgumentException("Invalid expression node: " + expression);
     }
+
 }

@@ -1,4 +1,6 @@
 # asjfajklsdklas
 BEGIN CODE
-    ( 5 + 5 * 2 ) / 3
+    INT x = (5 + 2 * 10) % 6
+    FLOAT z = x + 2.5
+    DISPLAY: z
 END CODE
