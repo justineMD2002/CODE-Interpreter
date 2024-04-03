@@ -1,5 +1,6 @@
-# asjfajklsdklas
 BEGIN CODE
-    SCAN: x 
-    DISPLAY: x
+INT x = 5
+CHAR c= 't'
+CHAR c = 'a'
+DISPLAY: c
 END CODE

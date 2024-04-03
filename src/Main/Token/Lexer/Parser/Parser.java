@@ -33,7 +33,6 @@ public class Parser {
             currentTokenIndex++;
             return true;
         }
-        // System.out.println(currentTokenIndex + " not matched");
         return false;
     }
 
@@ -48,10 +47,12 @@ public class Parser {
             reinitializeVariable((VariableDeclarationsNode) variableDeclarations);
             ASTNode executableCode = executableCode();
             if(match(Token.Type.EndContainer)) {
-                return new ProgramNode(variableDeclarations, executableCode);
+                if(tokens.size() == currentTokenIndex) {
+                    return new ProgramNode(variableDeclarations, executableCode);
+                } else {
+                    throw new EndContainerMissingException("END CODE reached but found more tokens.");
+                }
             } else {
-                System.out.println(currentTokenIndex);
-                System.out.println(tokens.get(currentTokenIndex).getType());
                 throw new EndContainerMissingException("Code should end with an \"END CODE\" syntax.");
             }
         } else {
@@ -221,10 +222,15 @@ public class Parser {
     // Expression -> Num | NumFloat | CharLiteral | BooleanLiteral
     private Object value() throws VariableInitializationException {
         String value = tokens.get(currentTokenIndex).getText();
-         if(match(Token.Type.Identifier) ) {
+        if(match(Token.Type.Identifier) ) {
             String variableName = tokens.get(currentTokenIndex - 1).getText();
             if(!match(Token.Type.Assign)) {
-                if (variableInitializer.getValue(variableName) != null) {
+                currentTokenIndex--;
+                ASTNode expr = expr();
+                if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
+                    LiteralNode val = arithmeticExpressionNode.evaluateExpression();
+                    return val.getValue();
+                } else if (variableInitializer.getValue(variableName) != null) {
                     return variableInitializer.getValue(variableName).getValue();
                 } else {
                     throw new VariableInitializationException("Variable " + variableName + " has not been declared nor initialized.");
@@ -233,8 +239,23 @@ public class Parser {
                 currentTokenIndex--;
                 return "continue";
             }
-        }
-         if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+        } else if (((tokens.get(currentTokenIndex + 1).getType() == Token.Type.Plus || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Minus ||
+                tokens.get(currentTokenIndex + 1).getType() == Token.Type.Times || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Divide ||
+                tokens.get(currentTokenIndex + 1).getType() == Token.Type.Modulo) && (match(Token.Type.Num) || match(Token.Type.NumFloat))) ||
+                match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(") ) {
+            currentTokenIndex--;
+            ASTNode expr = expr();
+            if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
+                LiteralNode val = arithmeticExpressionNode.evaluateExpression();
+                return val.getValue();
+            }
+        } else if(match(Token.Type.Num)) {
+            return Integer.parseInt(value);
+        } else if(match(Token.Type.NumFloat)) {
+            return Float.parseFloat(value);
+        } else if(match(Token.Type.CharLiteral)) {
+            return value.charAt(0);
+        } else if (match(Token.Type.BooleanLiteral)) {
             return value;
         }
         return null;
@@ -259,7 +280,7 @@ public class Parser {
                         }
                     }
                     case "CHAR" -> {
-                        if (!(assignedValue instanceof String)) {
+                        if (!(assignedValue instanceof Character)) {
                             throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type CHAR.");
                         }
                     }
@@ -293,22 +314,25 @@ public class Parser {
 
 
 
-    private ASTNode executableCode() throws DisplayException {
+
+
+    private ASTNode executableCode() throws DisplayException, VariableInitializationException {
         return displayFunction();
     }
+
+
 
 
 
     private void reinitializeVariable(VariableDeclarationsNode declarationStatements) throws VariableInitializationException {
         for(SingleVariableDeclaration declaration : declarationStatements.getVariableDeclarations() ) {
             String dataType = declaration.getDataType();
+            List<String> dominoInitializedVariables = new ArrayList<>();
             while(match(Token.Type.Identifier)) {
-
-                List<String> dominoInitializedVariables = new ArrayList<>();
                 String varName = tokens.get(currentTokenIndex-1).getText();
-                if(declaration.getVariableNames().contains(varName)) {
-                    dominoInitializedVariables.add(varName);
-                    Object assignedValue = assignment(); // currentIndex += 2
+                if(declaration.getVariableNames().contains(varName)) { //true
+                    dominoInitializedVariables.add(varName); // x
+                    Object assignedValue = assignment(); //
                     LiteralNode literalNode;
                     if(assignedValue != null) {
                         while(assignedValue == "continue") {
@@ -321,12 +345,17 @@ public class Parser {
                             initializeVariable(dominoInitializedVariable, literalNode);
                         }
                     }
+                    validateAssignmentType(dataType, varName);
+                } else {
+                    currentTokenIndex--;
+                    break;
                 }
 
-                validateAssignmentType(dataType, varName);
             }
         }
     }
+
+
 
 
 
@@ -335,19 +364,27 @@ public class Parser {
         if(match(Token.Type.Print)) {
             StringBuilder stringBuilder = new StringBuilder();
             if(match(Token.Type.Colon)) {
-                while(match(Token.Type.Identifier)) {
-                    String variableName = tokens.get(currentTokenIndex - 1).getText();
-                    LiteralNode value = variableInitializer.getValue(variableName);
+                String firstToken = tokens.get(currentTokenIndex).getText();
+                while(true) {
+                    if(match(Token.Type.Identifier)) { // Check if the variable is initialized
+                        String variableName = tokens.get(currentTokenIndex - 1).getText();
+                        LiteralNode value = variableInitializer.getValue(variableName);
 
-                    if (value != null) {
-                        stringBuilder.append(value.getValue()); // Append the value to the StringBuilder
+                        if (value != null) {
+                            stringBuilder.append(value.getValue()); // Append the value to the StringBuilder
+                        } else {
+                            throw new DisplayException("Variable '" + variableName + "' is not initialized.");
+                        }
+                    } else if(match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+                        stringBuilder.append(tokens.get(currentTokenIndex - 1).getText());
+                    } else if(match(Token.Type.NewLine)) {
+                        stringBuilder.append(System.lineSeparator());
+                    } else if (match(Token.Type.Concat)) {
+                        continue;
                     } else {
-                        throw new DisplayException("Variable '" + variableName + "' is not initialized.");
-                    }
-
-                    if (!match(Token.Type.Concat)) {
                         break;
                     }
+
                 }
                 return new DisplayNode(stringBuilder.toString());
             }
@@ -355,4 +392,61 @@ public class Parser {
         }
         return null;
     }
+
+
+
+    private Object parseExpression() throws VariableInitializationException {
+        ASTNode expr = expr();
+        if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
+            LiteralNode val = arithmeticExpressionNode.evaluateExpression();
+            return val.getValue();
+        }
+        return null;
+    }
+
+
+
+    private ASTNode expr() throws VariableInitializationException {
+        ASTNode term = term();
+
+        if (term == null) {
+            throw new VariableInitializationException("Invalid expression format.");
+        }
+        while (match(Token.Type.Plus) || match(Token.Type.Minus)) {
+            Token.Type operator = tokens.get(currentTokenIndex - 1).getType();
+            ASTNode rightOperand = term();
+            term = new ArithmeticExpressionNode(term, operator, rightOperand);
+        }
+        return term;
+    }
+
+
+    private  ASTNode term() throws VariableInitializationException {
+        ASTNode factor = factor();
+        while (match(Token.Type.Times) || match(Token.Type.Divide) || match(Token.Type.Modulo)) {
+            Token.Type operator = tokens.get(currentTokenIndex - 1).getType();
+            ASTNode rightOperand = factor();
+            factor = new ArithmeticExpressionNode(factor, operator, rightOperand);
+        }
+        return factor;
+    }
+
+
+    private ASTNode factor() throws VariableInitializationException {
+        if(match(Token.Type.Num)) {
+            return new LiteralNode(Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));
+        } else if(match(Token.Type.Identifier)) {
+            return new LiteralNode(variableInitializer.getValue(tokens.get(currentTokenIndex - 1).getText()).getValue());
+        }else if(match(Token.Type.NumFloat)) {
+            return new LiteralNode(Float.parseFloat(tokens.get(currentTokenIndex - 1).getText()));
+        } else if(match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(") ) {
+            ASTNode expression = expr();
+            if(tokens.get(currentTokenIndex).getText().equals(")") && match(Token.Type.Parentheses)) {
+                return expression;
+            }
+        }
+        return null;
+    }
+
+
 }
