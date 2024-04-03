@@ -48,7 +48,11 @@ public class Parser {
             reinitializeVariable((VariableDeclarationsNode) variableDeclarations);
             ASTNode executableCode = executableCode();
             if(match(Token.Type.EndContainer)) {
-                return new ProgramNode(variableDeclarations, executableCode);
+                if(tokens.size() == currentTokenIndex) {
+                    return new ProgramNode(variableDeclarations, executableCode);
+                } else {
+                    throw new EndContainerMissingException("END CODE reached but found more tokens.");
+                }
             } else {
                 throw new EndContainerMissingException("Code should end with an \"END CODE\" syntax.");
             }
@@ -247,14 +251,21 @@ public class Parser {
         }
         if (match(Token.Type.Num) || match(Token.Type.NumFloat)) {
             currentTokenIndex--;
+            if(match(Token.Type.Num)) {
+                return Integer.parseInt(value);
+            } else if(match(Token.Type.NumFloat)) {
+                return Float.parseFloat(value);
+            }
+
             ASTNode expr = expr();
             if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
                 LiteralNode val = arithmeticExpressionNode.evaluateExpression();
                 return val.getValue();
             }
-            return value;
         }
-        if(match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+        if(match(Token.Type.CharLiteral)) {
+            return value.charAt(0);
+        } else if (match(Token.Type.BooleanLiteral)) {
             return value;
         }
         return null;
@@ -279,7 +290,7 @@ public class Parser {
                         }
                     }
                     case "CHAR" -> {
-                        if (!(assignedValue instanceof String)) {
+                        if (!(assignedValue instanceof Character)) {
                             throw new VariableInitializationException("Error: Assigned value for variable '" + variable + "' does not match data type CHAR.");
                         }
                     }
@@ -377,6 +388,7 @@ public class Parser {
                             break;
                         }
                     }
+
                 }
                 return new DisplayNode(stringBuilder.toString());
             }
