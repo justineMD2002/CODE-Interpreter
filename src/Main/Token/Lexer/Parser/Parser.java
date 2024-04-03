@@ -401,7 +401,6 @@
         if (match(Token.Type.Print)) {
             StringBuilder stringBuilder = new StringBuilder();
             if (match(Token.Type.Colon)) {
-                String firstToken = tokens.get(currentTokenIndex).getText();
                 while (true) {
                     if (match(Token.Type.Identifier)) {
                         // Check if the variable is initialized
@@ -418,7 +417,9 @@
                         String escapeSequence = tokens.get(currentTokenIndex - 1).getText();
                         // Append the escape character to the output string
                         stringBuilder.append(escapeSequence);
-                    } else if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+                    } else if (match(Token.Type.Num) || match(Token.Type.NumFloat) ||
+                            match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral) ||
+                            match(Token.Type.StringLiteral)) {
                         stringBuilder.append(tokens.get(currentTokenIndex - 1).getText());
                     } else if (match(Token.Type.NewLine)) {
                         stringBuilder.append(System.lineSeparator());
