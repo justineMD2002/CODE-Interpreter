@@ -79,6 +79,10 @@ public class Lexer {
         }
     }
 
+    private boolean isValidEscapeChar(char c) {
+        return c == '$' || c == '&' || c == '[' || c == ']' || c == '\'' || c == '"' || c == '#';
+    }
+
     private void addSingleCharacterToken(List<Token> tokens, char character, int startPos) {
         Token.Type type;
 
@@ -104,8 +108,22 @@ public class Lexer {
                 tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
                 currentPos += 2;
                 return;
+            char nextChar = input.charAt(currentPos + 1); 
+        
+            if (currentPos + 1 < input.length() && isValidEscapeChar(nextChar)) {
+                charLiteralBuilder.append(nextChar); 
+                currentPos++; 
+        
+                if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == ']') {
+                    String charLiteral = charLiteralBuilder.toString();
+                    tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
+                    currentPos += 2; 
+                    return;
+                } else {
+                    throw new RuntimeException("Unclosed or invalid character literal starting at position " + startPos);
+                }
             } else {
-                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+                throw new RuntimeException("Invalid character following '[' at position " + (startPos + 1));
             }
         }
 
