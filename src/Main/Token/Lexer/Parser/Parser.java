@@ -223,14 +223,6 @@ public class Parser {
     // Expression -> Num | NumFloat | CharLiteral | BooleanLiteral
     private Object value() throws VariableInitializationException {
         String value = tokens.get(currentTokenIndex).getText();
-        if(match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(") ) {
-            currentTokenIndex--;
-            ASTNode expr = expr();
-            if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
-                LiteralNode val = arithmeticExpressionNode.evaluateExpression();
-                return val.getValue();
-            }
-        }
         if(match(Token.Type.Identifier) ) {
             String variableName = tokens.get(currentTokenIndex - 1).getText();
             if(!match(Token.Type.Assign)) {
@@ -248,22 +240,21 @@ public class Parser {
                 currentTokenIndex--;
                 return "continue";
             }
-        }
-        if (match(Token.Type.Num) || match(Token.Type.NumFloat)) {
+        } else if (((tokens.get(currentTokenIndex + 1).getType() == Token.Type.Plus || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Minus ||
+                tokens.get(currentTokenIndex + 1).getType() == Token.Type.Times || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Divide ||
+                tokens.get(currentTokenIndex + 1).getType() == Token.Type.Modulo) && (match(Token.Type.Num) || match(Token.Type.NumFloat))) ||
+                match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(") ) {
             currentTokenIndex--;
-            if(match(Token.Type.Num)) {
-                return Integer.parseInt(value);
-            } else if(match(Token.Type.NumFloat)) {
-                return Float.parseFloat(value);
-            }
-
             ASTNode expr = expr();
             if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
                 LiteralNode val = arithmeticExpressionNode.evaluateExpression();
                 return val.getValue();
             }
-        }
-        if(match(Token.Type.CharLiteral)) {
+        } else if(match(Token.Type.Num)) {
+            return Integer.parseInt(value);
+        } else if(match(Token.Type.NumFloat)) {
+            return Float.parseFloat(value);
+        } else if(match(Token.Type.CharLiteral)) {
             return value.charAt(0);
         } else if (match(Token.Type.BooleanLiteral)) {
             return value;

@@ -1,6 +1,6 @@
 # asjfajklsdklas
 BEGIN CODE
-    INT x,y,z=100
+    INT x,y,z=((100 - 20)*4)/5
     CHAR t='x'
     x=y=4
     t = ' '
