@@ -69,7 +69,7 @@ public class Lexer {
                     }
             }
         }
-//        printTokens(tokens);
+    //    printTokens(tokens);
         return tokens;
     }
 
@@ -83,6 +83,33 @@ public class Lexer {
         Token.Type type;
 
         if(character == '_') handleIdentifierOrKeyword(tokens, startPos);
+
+        if(character == '[') {
+            StringBuilder charLiteralBuilder = new StringBuilder();
+            while(currentPos < input.length() && input.charAt(currentPos + 1) != ']') {
+                char nextChar = input.charAt(currentPos + 1);
+                charLiteralBuilder.append(nextChar);
+                currentPos++;
+            }
+
+            if(currentPos + 1 < input.length() && input.charAt(currentPos + 2) == ']') {
+                char nextChar = input.charAt(currentPos + 1);
+                charLiteralBuilder.append(nextChar);
+                String charLiteral = charLiteralBuilder.toString();
+                tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
+                currentPos += 3;
+                return;
+            }
+
+            else if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == ']') {
+                String charLiteral = charLiteralBuilder.toString();
+                tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
+                currentPos += 2;
+                return;
+            } else {
+                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+            }
+        }
 
         if(character == '\'') {
             StringBuilder charLiteralBuilder = new StringBuilder();
@@ -137,8 +164,10 @@ public class Lexer {
                 type = Token.Type.Parentheses;
                 break;
             case '[':
+                type = Token.Type.SquareBOpen;
+                break;  
             case ']':
-                type = Token.Type.SquareB;
+                type = Token.Type.SquareBClose;
                 break;  
             case '&':
                 type = Token.Type.Concat;
