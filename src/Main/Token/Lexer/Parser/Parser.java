@@ -50,8 +50,6 @@ public class Parser {
             if(match(Token.Type.EndContainer)) {
                 return new ProgramNode(variableDeclarations, executableCode);
             } else {
-                System.out.println(currentTokenIndex);
-                System.out.println(tokens.get(currentTokenIndex).getType());
                 throw new EndContainerMissingException("Code should end with an \"END CODE\" syntax.");
             }
         } else {
@@ -221,23 +219,27 @@ public class Parser {
     // Expression -> Num | NumFloat | CharLiteral | BooleanLiteral
     private Object value() throws VariableInitializationException {
         String value = tokens.get(currentTokenIndex).getText();
-         if(match(Token.Type.Identifier) ) {
-            String variableName = tokens.get(currentTokenIndex - 1).getText();
-            if(!match(Token.Type.Assign)) {
-                if (variableInitializer.getValue(variableName) != null) {
-                    return variableInitializer.getValue(variableName).getValue();
+//        if(tokens.get(currentTokenIndex+1).getType() == Token.Type.Parentheses || tokens.get(currentTokenIndex+1).getType() == Token.Type.Plus || tokens.get(currentTokenIndex+1).getType() == Token.Type.Minus || tokens.get(currentTokenIndex+1).getType() == Token.Type.Times || tokens.get(currentTokenIndex+1).getType() == Token.Type.Divide) {
+            if(match(Token.Type.Identifier) ) {
+                String variableName = tokens.get(currentTokenIndex - 1).getText();
+                if(!match(Token.Type.Assign)) {
+                    if (variableInitializer.getValue(variableName) != null) {
+                        return variableInitializer.getValue(variableName).getValue();
+                    } else {
+                        throw new VariableInitializationException("Variable " + variableName + " has not been declared nor initialized.");
+                    }
                 } else {
-                    throw new VariableInitializationException("Variable " + variableName + " has not been declared nor initialized.");
+                    currentTokenIndex--;
+                    return "continue";
                 }
-            } else {
-                currentTokenIndex--;
-                return "continue";
             }
-        }
-         if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
-            return value;
-        }
-        return null;
+            if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+                return value;
+            }
+            return null;
+//        }
+
+//        return expr() instanceof ArithmeticExpressionNode ? ((ArithmeticExpressionNode) expr()).evaluateExpression().getValue() : null;
     }
 
 
@@ -293,22 +295,26 @@ public class Parser {
 
 
 
-    private ASTNode executableCode() throws DisplayException {
+
+
+    private ASTNode executableCode() throws DisplayException, VariableInitializationException {
+//        parseExpression();
         return displayFunction();
     }
+
+
 
 
 
     private void reinitializeVariable(VariableDeclarationsNode declarationStatements) throws VariableInitializationException {
         for(SingleVariableDeclaration declaration : declarationStatements.getVariableDeclarations() ) {
             String dataType = declaration.getDataType();
+            List<String> dominoInitializedVariables = new ArrayList<>();
             while(match(Token.Type.Identifier)) {
-
-                List<String> dominoInitializedVariables = new ArrayList<>();
                 String varName = tokens.get(currentTokenIndex-1).getText();
-                if(declaration.getVariableNames().contains(varName)) {
-                    dominoInitializedVariables.add(varName);
-                    Object assignedValue = assignment(); // currentIndex += 2
+                if(declaration.getVariableNames().contains(varName)) { //true
+                    dominoInitializedVariables.add(varName); // x
+                    Object assignedValue = assignment(); //
                     LiteralNode literalNode;
                     if(assignedValue != null) {
                         while(assignedValue == "continue") {
@@ -321,12 +327,17 @@ public class Parser {
                             initializeVariable(dominoInitializedVariable, literalNode);
                         }
                     }
+                    validateAssignmentType(dataType, varName);
+                } else {
+                    currentTokenIndex--;
+                    break;
                 }
 
-                validateAssignmentType(dataType, varName);
             }
         }
     }
+
+
 
 
 
@@ -335,18 +346,27 @@ public class Parser {
         if(match(Token.Type.Print)) {
             StringBuilder stringBuilder = new StringBuilder();
             if(match(Token.Type.Colon)) {
-                while(match(Token.Type.Identifier)) {
-                    String variableName = tokens.get(currentTokenIndex - 1).getText();
-                    LiteralNode value = variableInitializer.getValue(variableName);
-
-                    if (value != null) {
-                        stringBuilder.append(value.getValue()); // Append the value to the StringBuilder
-                    } else {
-                        throw new DisplayException("Variable '" + variableName + "' is not initialized.");
+                while(true) {
+                    if(match(Token.Type.NewLine)) {
+                        stringBuilder.append("\n");
+                        continue;
                     }
+                    if(match(Token.Type.Identifier)) {
+                        String variableName = tokens.get(currentTokenIndex - 1).getText();
+                        LiteralNode value = variableInitializer.getValue(variableName);
 
-                    if (!match(Token.Type.Concat)) {
-                        break;
+                        if (value != null) {
+                            stringBuilder.append(value.getValue()); // Append the value to the StringBuilder
+                        } else {
+                            throw new DisplayException("Variable '" + variableName + "' is not initialized.");
+                        }
+                        if (!match(Token.Type.Concat)) {
+                            if(match(Token.Type.NewLine)) {
+                                stringBuilder.append("\n");
+                                continue;
+                            }
+                            break;
+                        }
                     }
                 }
                 return new DisplayNode(stringBuilder.toString());
@@ -355,4 +375,57 @@ public class Parser {
         }
         return null;
     }
+
+
+
+//    private void parseExpression() throws VariableInitializationException {
+//        System.out.println(expr() instanceof ArithmeticExpressionNode ? ((ArithmeticExpressionNode) expr()).evaluateExpression().getValue() : "Not an arithmetic expression");
+//    }
+//
+//
+//
+//    private ASTNode expr() throws VariableInitializationException {
+////        System.out.println("currentTokenIndex1: " + currentTokenIndex);
+//        ASTNode term = term();
+//        if (term == null) {
+//            throw new VariableInitializationException("Invalid expression format.");
+//        }
+//        while (match(Token.Type.Plus) || match(Token.Type.Minus)) {
+//            Token.Type operator = tokens.get(currentTokenIndex - 1).getType();
+//            ASTNode rightOperand = term();
+//            term = new ArithmeticExpressionNode(term, operator, rightOperand);
+//        }
+//        return term;
+//    }
+//
+//
+//    private  ASTNode term() throws VariableInitializationException {
+//        System.out.println("currentTokenIndex2: " + currentTokenIndex);
+//        ASTNode factor = factor();
+//        while (match(Token.Type.Times) || match(Token.Type.Divide)) {
+//            Token.Type operator = tokens.get(currentTokenIndex - 1).getType();
+//            ASTNode rightOperand = factor();
+//            factor = new ArithmeticExpressionNode(factor, operator, rightOperand);
+//        }
+//        return factor;
+//    }
+//
+//
+//    private ASTNode factor() throws VariableInitializationException {
+//        System.out.println("currentTokenIndex3: " + currentTokenIndex);
+//        if(match(Token.Type.Num)) {
+//            System.out.println("literal: " + Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));
+//            return new LiteralNode(Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));
+//        } else if(match(Token.Type.NumFloat)) {
+//            return new LiteralNode(Float.parseFloat(tokens.get(currentTokenIndex - 1).getText()));
+//        } else if(tokens.get(currentTokenIndex).getText().equals("(") && match(Token.Type.Parentheses)) {
+//            ASTNode expression = expr();
+//            if(tokens.get(currentTokenIndex).getText().equals(")") && match(Token.Type.Parentheses)) {
+//                return expression;
+//            }
+//        }
+//        return null;
+//    }
+
+
 }
