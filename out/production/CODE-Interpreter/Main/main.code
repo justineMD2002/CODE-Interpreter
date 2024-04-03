@@ -1,11 +1,4 @@
 # asjfajklsdklas
 BEGIN CODE
-    INT x, y, z=5
-    CHAR d = 't'
-    FLOAT f = 3.14
-    BOOL b = "TRUE"
-    x=y=2
-    d='a'
-    b="FALSE"
-    DISPLAY: b&f
+    ( 5 + 5 * 2 ) / 3
 END CODE

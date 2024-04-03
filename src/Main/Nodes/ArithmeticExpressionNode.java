@@ -27,8 +27,13 @@ public class ArithmeticExpressionNode extends ASTNode {
     }
 
     public LiteralNode evaluateExpression() {
-        int leftValue = evaluate(getLeftOperand());
-        int rightValue = evaluate(getRightOperand());
+        LiteralNode leftValueNode = evaluate(getLeftOperand());
+        LiteralNode rightValueNode = evaluate(getRightOperand());
+
+        int leftValue = Integer.parseInt(leftValueNode.getValue().toString());
+        int rightValue = Integer.parseInt(rightValueNode.getValue().toString());
+
+        System.out.println(leftValue + " " + getOperator() + " " + rightValue);
 
         int result = switch (getOperator()) {
             case Plus -> leftValue + rightValue;
@@ -47,11 +52,11 @@ public class ArithmeticExpressionNode extends ASTNode {
         return new LiteralNode(result);
     }
 
-    private int evaluate(ASTNode expression) {
+    private LiteralNode evaluate(ASTNode expression) {
         if (expression instanceof LiteralNode) {
-            return Integer.parseInt(((LiteralNode) expression).getValue().toString());
+            return (LiteralNode) expression;
         } else if (expression instanceof ArithmeticExpressionNode arithmeticExpression) {
-            return Integer.parseInt(evaluateExpression().getValue().toString());
+            return arithmeticExpression.evaluateExpression();
         }
         throw new IllegalArgumentException("Invalid expression node: " + expression);
     }

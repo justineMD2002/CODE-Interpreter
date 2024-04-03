@@ -298,7 +298,7 @@ public class Parser {
 
 
     private ASTNode executableCode() throws DisplayException, VariableInitializationException {
-//        parseExpression();
+            parseExpression();
         return displayFunction();
     }
 
@@ -378,54 +378,56 @@ public class Parser {
 
 
 
-//    private void parseExpression() throws VariableInitializationException {
-//        System.out.println(expr() instanceof ArithmeticExpressionNode ? ((ArithmeticExpressionNode) expr()).evaluateExpression().getValue() : "Not an arithmetic expression");
-//    }
-//
-//
-//
-//    private ASTNode expr() throws VariableInitializationException {
-////        System.out.println("currentTokenIndex1: " + currentTokenIndex);
-//        ASTNode term = term();
-//        if (term == null) {
-//            throw new VariableInitializationException("Invalid expression format.");
-//        }
-//        while (match(Token.Type.Plus) || match(Token.Type.Minus)) {
-//            Token.Type operator = tokens.get(currentTokenIndex - 1).getType();
-//            ASTNode rightOperand = term();
-//            term = new ArithmeticExpressionNode(term, operator, rightOperand);
-//        }
-//        return term;
-//    }
-//
-//
-//    private  ASTNode term() throws VariableInitializationException {
-//        System.out.println("currentTokenIndex2: " + currentTokenIndex);
-//        ASTNode factor = factor();
-//        while (match(Token.Type.Times) || match(Token.Type.Divide)) {
-//            Token.Type operator = tokens.get(currentTokenIndex - 1).getType();
-//            ASTNode rightOperand = factor();
-//            factor = new ArithmeticExpressionNode(factor, operator, rightOperand);
-//        }
-//        return factor;
-//    }
-//
-//
-//    private ASTNode factor() throws VariableInitializationException {
-//        System.out.println("currentTokenIndex3: " + currentTokenIndex);
-//        if(match(Token.Type.Num)) {
-//            System.out.println("literal: " + Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));
-//            return new LiteralNode(Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));
-//        } else if(match(Token.Type.NumFloat)) {
-//            return new LiteralNode(Float.parseFloat(tokens.get(currentTokenIndex - 1).getText()));
-//        } else if(tokens.get(currentTokenIndex).getText().equals("(") && match(Token.Type.Parentheses)) {
-//            ASTNode expression = expr();
-//            if(tokens.get(currentTokenIndex).getText().equals(")") && match(Token.Type.Parentheses)) {
-//                return expression;
-//            }
-//        }
-//        return null;
-//    }
+    private void parseExpression() throws VariableInitializationException {
+        ASTNode expr = expr();
+        System.out.println(expr instanceof ArithmeticExpressionNode ? ((ArithmeticExpressionNode) expr).evaluateExpression().getValue() : "Not an arithmetic expression");
+    }
+
+
+
+    private ASTNode expr() throws VariableInitializationException {
+        System.out.println("currentTokenIndex1: " + currentTokenIndex);
+        ASTNode term = term();
+        System.out.println();
+        if (term == null) {
+            throw new VariableInitializationException("Invalid expression format.");
+        }
+        while (match(Token.Type.Plus) || match(Token.Type.Minus)) {
+            Token.Type operator = tokens.get(currentTokenIndex - 1).getType();
+            ASTNode rightOperand = term();
+            term = new ArithmeticExpressionNode(term, operator, rightOperand);
+        }
+        return term;
+    }
+
+
+    private  ASTNode term() throws VariableInitializationException {
+        System.out.println("currentTokenIndex2: " + currentTokenIndex);
+        ASTNode factor = factor();
+        while (match(Token.Type.Times) || match(Token.Type.Divide)) {
+            Token.Type operator = tokens.get(currentTokenIndex - 1).getType();
+            ASTNode rightOperand = factor();
+            factor = new ArithmeticExpressionNode(factor, operator, rightOperand);
+        }
+        return factor;
+    }
+
+
+    private ASTNode factor() throws VariableInitializationException {
+        System.out.println("currentTokenIndex3: " + currentTokenIndex);
+        if(match(Token.Type.Num)) {
+            System.out.println("literal: " + Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));
+            return new LiteralNode(Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));
+        } else if(match(Token.Type.NumFloat)) {
+            return new LiteralNode(Float.parseFloat(tokens.get(currentTokenIndex - 1).getText()));
+        } else if(tokens.get(currentTokenIndex).getText().equals("(") && match(Token.Type.Parentheses)) {
+            ASTNode expression = expr();
+            if(tokens.get(currentTokenIndex).getText().equals(")") && match(Token.Type.Parentheses)) {
+                return expression;
+            }
+        }
+        return null;
+    }
 
 
 }
