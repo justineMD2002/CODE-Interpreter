@@ -1,6 +1,5 @@
 BEGIN CODE
-INT x = 5
-CHAR c= 't'
-CHAR c = 'a'
-DISPLAY: c
+    CHAR a = 'a'
+    INT b = 5
+    DISPLAY: [[] & a & []]
 END CODE

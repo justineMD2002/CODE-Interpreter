@@ -1,5 +1,5 @@
-# asjfajklsdklas
 BEGIN CODE
-    SCAN: x 
-    DISPLAY: x
+    CHAR a = 'a'
+    INT b = 5
+    DISPLAY: [[] & a & []]
 END CODE

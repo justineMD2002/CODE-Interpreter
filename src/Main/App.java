@@ -8,7 +8,6 @@ import Main.Token.Lexer.Lexer;
 import Main.Token.Lexer.Parser.Parser;
 import Main.Token.Lexer.Parser.SemanticAnalyzer;
 import Main.Token.Token;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

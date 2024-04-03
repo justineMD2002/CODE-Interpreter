@@ -36,7 +36,7 @@ public class Token {
       Num, Plus, Times, Divide, Modulo, Minus, Greater, Less, GreaterEqual, LessEqual,
       NotEqual, Assign, And, Or, Not, Identifier, BeginContainer, EndContainer, BeginIf, EndIf,
       BeginWhile, EndWhile, Int, Bool, Char, Float, If, IfElse, Else, Equals, Comma, Print, 
-      Parentheses, SquareB, Concat, NewLine, BooleanLiteral, Scan, NumFloat,
-      CharLiteral, Colon
+      Parentheses, SquareBOpen, SquareBClose, Concat, NewLine, BooleanLiteral, Scan, NumFloat,
+      CharLiteral, Colon, Escape
   }
 }

@@ -46,6 +46,11 @@ public class Parser {
             ASTNode variableDeclarations = variableDeclarations();
             reinitializeVariable((VariableDeclarationsNode) variableDeclarations);
             ASTNode executableCode = executableCode();
+
+            if(match(Token.Type.SquareBOpen)) {
+                System.out.println("test");
+            }
+
             if(match(Token.Type.EndContainer)) {
                 if(tokens.size() == currentTokenIndex) {
                     return new ProgramNode(variableDeclarations, executableCode);
@@ -360,38 +365,42 @@ public class Parser {
 
 
     private DisplayNode displayFunction() throws DisplayException {
-
-        if(match(Token.Type.Print)) {
+        if (match(Token.Type.Print)) {
             StringBuilder stringBuilder = new StringBuilder();
-            if(match(Token.Type.Colon)) {
+            if (match(Token.Type.Colon)) {
                 String firstToken = tokens.get(currentTokenIndex).getText();
-                while(true) {
-                    if(match(Token.Type.Identifier)) { // Check if the variable is initialized
+                while (true) {
+                    if (match(Token.Type.Identifier)) {
+                        // Check if the variable is initialized
                         String variableName = tokens.get(currentTokenIndex - 1).getText();
                         LiteralNode value = variableInitializer.getValue(variableName);
-
+    
                         if (value != null) {
                             stringBuilder.append(value.getValue()); // Append the value to the StringBuilder
                         } else {
                             throw new DisplayException("Variable '" + variableName + "' is not initialized.");
                         }
-                    } else if(match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+                    } else if (match(Token.Type.Escape)) {
+                        // Handle escape character
+                        String escapeSequence = tokens.get(currentTokenIndex - 1).getText();
+                        // Append the escape character to the output string
+                        stringBuilder.append(escapeSequence);
+                    } else if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
                         stringBuilder.append(tokens.get(currentTokenIndex - 1).getText());
-                    } else if(match(Token.Type.NewLine)) {
+                    } else if (match(Token.Type.NewLine)) {
                         stringBuilder.append(System.lineSeparator());
                     } else if (match(Token.Type.Concat)) {
                         continue;
                     } else {
                         break;
                     }
-
                 }
                 return new DisplayNode(stringBuilder.toString());
             }
-
         }
         return null;
     }
+    
 
 
 
