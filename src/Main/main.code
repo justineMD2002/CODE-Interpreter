@@ -1,5 +1,4 @@
 BEGIN CODE
     CHAR a = 'a'
-    INT b = 5
-    DISPLAY: [[] & a & []]
+    DISPLAY: ["] & a & []]
 END CODE

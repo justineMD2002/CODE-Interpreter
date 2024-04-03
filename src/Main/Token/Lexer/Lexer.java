@@ -79,37 +79,38 @@ public class Lexer {
         }
     }
 
+    private boolean isValidEscapeChar(char c) {
+        return c == '$' || c == '&' || c == '[' || c == ']' || c == '\'' || c == '"';
+    }
+
     private void addSingleCharacterToken(List<Token> tokens, char character, int startPos) {
         Token.Type type;
 
         if(character == '_') handleIdentifierOrKeyword(tokens, startPos);
 
-        if(character == '[') {
+        if (character == '[') {
             StringBuilder charLiteralBuilder = new StringBuilder();
-            while(currentPos < input.length() && input.charAt(currentPos + 1) != ']') {
-                char nextChar = input.charAt(currentPos + 1);
-                charLiteralBuilder.append(nextChar);
-                currentPos++;
-            }
-
-            if(currentPos + 1 < input.length() && input.charAt(currentPos + 2) == ']') {
-                char nextChar = input.charAt(currentPos + 1);
-                charLiteralBuilder.append(nextChar);
-                String charLiteral = charLiteralBuilder.toString();
-                tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
-                currentPos += 3;
-                return;
-            }
-
-            else if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == ']') {
-                String charLiteral = charLiteralBuilder.toString();
-                tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
-                currentPos += 2;
-                return;
+            char nextChar = input.charAt(currentPos + 1); 
+        
+            if (currentPos + 1 < input.length() && isValidEscapeChar(nextChar)) {
+                charLiteralBuilder.append(nextChar); 
+                currentPos++; 
+        
+                if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == ']') {
+                    String charLiteral = charLiteralBuilder.toString();
+                    tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
+                    currentPos += 2; 
+                    return;
+                } else {
+                    throw new RuntimeException("Unclosed or invalid character literal starting at position " + startPos);
+                }
             } else {
-                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+                throw new RuntimeException("Invalid character following '[' at position " + (startPos + 1));
             }
         }
+        
+
+        
 
         if(character == '\'') {
             StringBuilder charLiteralBuilder = new StringBuilder();
