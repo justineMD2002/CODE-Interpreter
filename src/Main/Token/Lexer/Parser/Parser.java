@@ -45,11 +45,10 @@ public class Parser {
         if(match(Token.Type.BeginContainer)) {
             ASTNode variableDeclarations = variableDeclarations();
             reinitializeVariable((VariableDeclarationsNode) variableDeclarations);
-            ASTNode displayNodes = executableCode();
             ASTNode executableCode = executableCode();
             if(match(Token.Type.EndContainer)) {
                 if(tokens.size() == currentTokenIndex) {
-                    return new ProgramNode(variableDeclarations, displayNodes);
+                    return new ProgramNode(variableDeclarations, executableCode);
                 } else {
                     throw new EndContainerMissingException("END CODE reached but found more tokens.");
                 }
@@ -364,7 +363,6 @@ public class Parser {
         if (match(Token.Type.Print)) {
             StringBuilder stringBuilder = new StringBuilder();
             if (match(Token.Type.Colon)) {
-                String firstToken = tokens.get(currentTokenIndex).getText();
                 while (true) {
                     if (match(Token.Type.Identifier)) {
                         // Check if the variable is initialized
@@ -381,7 +379,9 @@ public class Parser {
                         String escapeSequence = tokens.get(currentTokenIndex - 1).getText();
                         // Append the escape character to the output string
                         stringBuilder.append(escapeSequence);
-                    } else if (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral)) {
+                    } else if (match(Token.Type.Num) || match(Token.Type.NumFloat) ||
+                            match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral) ||
+                            match(Token.Type.StringLiteral)) {
                         stringBuilder.append(tokens.get(currentTokenIndex - 1).getText());
                     } else if (match(Token.Type.NewLine)) {
                         stringBuilder.append(System.lineSeparator());

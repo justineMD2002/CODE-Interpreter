@@ -1,4 +1,9 @@
 BEGIN CODE
-INT x = 5
-CHAR c= 't'
+INT x, y, z=5
+CHAR a_1='n'
+BOOL t="TRUE"
+x=y=4
+a_1='c'
+# this is a comment
+DISPLAY: "Hello, World!"
 END CODE
