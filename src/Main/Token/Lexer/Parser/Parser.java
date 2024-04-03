@@ -413,7 +413,7 @@
                         } else {
                             throw new DisplayException("Variable '" + variableName + "' is not initialized.");
                         }
-                    } else if (match(Token.Type.Escape)) {
+                    } else if (match(Token.Type.Escape)) {  
                         // Handle escape character
                         String escapeSequence = tokens.get(currentTokenIndex - 1).getText();
                         // Append the escape character to the output string

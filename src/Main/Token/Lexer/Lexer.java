@@ -80,7 +80,7 @@ public class Lexer {
     }
 
     private boolean isValidEscapeChar(char c) {
-        return c == '$' || c == '&' || c == '[' || c == ']' || c == '\'' || c == '"';
+        return c == '$' || c == '&' || c == '[' || c == ']' || c == '\'' || c == '"' || c == '#';
     }
 
     private void addSingleCharacterToken(List<Token> tokens, char character, int startPos) {
@@ -108,9 +108,6 @@ public class Lexer {
                 throw new RuntimeException("Invalid character following '[' at position " + (startPos + 1));
             }
         }
-        
-
-        
 
         if(character == '\'') {
             StringBuilder charLiteralBuilder = new StringBuilder();
