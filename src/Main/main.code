@@ -1,6 +1,4 @@
 BEGIN CODE
 INT x = 5
 CHAR c= 't'
-CHAR c = 'a'
-DISPLAY: c
 END CODE
