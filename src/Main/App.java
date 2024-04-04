@@ -31,7 +31,7 @@ public class App {
             if (parsedNode instanceof ProgramNode programNode) {
                 programNode.displayOutput();
             }
-            System.out.println("\nParsing complete");
+            System.out.println();
         } catch (IOException e) {
             System.err.println("Error reading file:");
             e.printStackTrace();

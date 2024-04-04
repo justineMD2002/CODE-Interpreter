@@ -38,9 +38,7 @@
     private ASTNode program() throws VariableDeclarationException, VariableInitializationException, DisplayException, BeginContainerMissingException, EndContainerMissingException, InputMismatchException, SyntaxErrorException {
         if(match(Token.Type.BeginContainer)) {
             ASTNode variableDeclarations = variableDeclarations();
-            reinitializeVariable((VariableDeclarationsNode) variableDeclarations);
-            ASTNode executableCode = executableCode();
-            scanFunction();
+            ASTNode executableCode = executableCode((VariableDeclarationsNode) variableDeclarations);
 
             if(match(Token.Type.EndContainer)) {
                 if(tokens.size() == currentTokenIndex) {
@@ -165,6 +163,7 @@
         // VariableList -> VariableName VariableList'
         private List<String> variableList() throws VariableDeclarationException, VariableInitializationException {
             List<String> variableNames = new ArrayList<>();
+            List<String> dominoInitializedVariables = new ArrayList<>();
             String variableName = variableName();
             if (variableName != null) {
                 if(isReservedVariable(variableName.toLowerCase())) {
@@ -175,12 +174,20 @@
                     Also include whether it is initialized
                     on declaration
                 */
+                dominoInitializedVariables.add(variableName);
                 Object assignmentValue = assignment();
                 LiteralNode value;
                 if(assignmentValue != null) {
     //                System.out.println("not null");
+                    while(assignmentValue == "continue") {
+                        dominoInitializedVariables.add(tokens.get(currentTokenIndex-1).getText());
+                        variableNames.add(tokens.get(currentTokenIndex-1).getText());
+                        assignmentValue = assignment();
+                    }
                     value = new LiteralNode(assignmentValue);
-                    initializeVariable(variableName, value);
+                    for (String dominoInitializedVariable : dominoInitializedVariables) {
+                        initializeVariable(dominoInitializedVariable, value);
+                    }
                 }
                 /*
                 *  */
@@ -354,8 +361,24 @@
 
 
 
-    private ASTNode executableCode() throws DisplayException {
-        return displayFunction();
+    private ASTNode executableCode(VariableDeclarationsNode variableDeclarationsNode) throws DisplayException, VariableInitializationException, VariableDeclarationException, SyntaxErrorException {
+        while(true) {
+            if (match(Token.Type.Print)) {
+                currentTokenIndex--;
+                displayFunction();
+            } else if (match(Token.Type.Identifier)) {
+                if (match(Token.Type.Assign)) {
+                    currentTokenIndex -= 2;
+                    reinitializeVariable(variableDeclarationsNode);
+                }
+            } else if (match(Token.Type.Scan)) {
+                currentTokenIndex--;
+                scanFunction();
+            } else {
+                break;
+            }
+        }
+        return null;
     }
 
 
@@ -397,42 +420,67 @@
     
 
 
-    private DisplayNode displayFunction() throws DisplayException {
+    private void displayFunction() throws DisplayException {
         if (match(Token.Type.Print)) {
             StringBuilder stringBuilder = new StringBuilder();
+            boolean concatEncountered = true;
             if (match(Token.Type.Colon)) {
                 while (true) {
                     if (match(Token.Type.Identifier)) {
                         // Check if the variable is initialized
                         String variableName = tokens.get(currentTokenIndex - 1).getText();
                         LiteralNode value = variableInitializer.getValue(variableName);
-    
+
                         if (value != null) {
-                            stringBuilder.append(value.getValue()); // Append the value to the StringBuilder
+                            stringBuilder.append(value.getValue());
                         } else {
                             throw new DisplayException("Variable '" + variableName + "' is not initialized.");
                         }
-                    } else if (match(Token.Type.Escape)) {  
+                    } else if (match(Token.Type.Escape)) {
                         // Handle escape character
                         String escapeSequence = tokens.get(currentTokenIndex - 1).getText();
                         // Append the escape character to the output string
                         stringBuilder.append(escapeSequence);
+
                     } else if (match(Token.Type.Num) || match(Token.Type.NumFloat) ||
                             match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral) ||
                             match(Token.Type.StringLiteral)) {
                         stringBuilder.append(tokens.get(currentTokenIndex - 1).getText());
+                        if (match(Token.Type.Concat)) {
+                            continue;
+                        } else {
+                            break;
+                        }
                     } else if (match(Token.Type.NewLine)) {
                         stringBuilder.append(System.lineSeparator());
-                    } else if (match(Token.Type.Concat)) {
+                        if (match(Token.Type.Concat)) {
+                            continue;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        throw new DisplayException("Invalid display statement format.");
+                    }
+
+                    if (match(Token.Type.Concat)) {
                         continue;
                     } else {
+                        if(tokens.get(currentTokenIndex).getType() == Token.Type.NewLine ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.Identifier ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.StringLiteral ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.CharLiteral ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.Num ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.NumFloat ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.BooleanLiteral) {
+                            throw new DisplayException("Invalid display statement format.");
+                        }
                         break;
                     }
+
                 }
-                return new DisplayNode(stringBuilder.toString());
+                    System.out.print(stringBuilder);
             }
         }
-        return null;
     }
     
 
