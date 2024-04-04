@@ -155,7 +155,15 @@ public class Lexer {
                 type = Token.Type.Plus;
                 break;
             case '-':
-                type = Token.Type.Minus;
+                if(currentPos < input.length() && tokens.getLast().getType() == Token.Type.Num ||
+                        tokens.getLast().getType() == Token.Type.NumFloat ||
+                        tokens.getLast().getType() == Token.Type.Identifier ||
+                        (tokens.getLast().getType() == Token.Type.Parentheses && tokens.getLast().getText().equals(")")) ) {
+                    type = Token.Type.Minus;
+                }
+                else {
+                    type = Token.Type.Negation;
+                }
                 break;
             case '(':
             case ')':

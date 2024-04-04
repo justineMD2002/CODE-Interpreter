@@ -1,4 +1,0 @@
-BEGIN CODE
-    SCAN: x,y
-    DISPLAY: x&y
-END CODE
