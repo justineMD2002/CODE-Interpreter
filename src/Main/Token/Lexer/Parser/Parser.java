@@ -55,22 +55,27 @@
     }
 
 
-        private void scanFunction() throws InputMismatchException, VariableInitializationException, SyntaxErrorException, VariableDeclarationException {
+        private void scanFunction(VariableDeclarationsNode declarations) throws InputMismatchException, VariableInitializationException, SyntaxErrorException, VariableDeclarationException {
             if (match(Token.Type.Scan)) {
                 if (match(Token.Type.Colon)) {
-                    List<String> variableNames = variableList();
-                    Scanner scanner = new Scanner(System.in);
-                    for (String variableName : variableNames) {
-                        System.out.print("Enter value for " + variableName + ": ");
-                        if (scanner.hasNext()) {
-                            String userInput = scanner.next();
-                            Object parsedValue = parseInput(userInput);
-                            if (parsedValue != null) {
-                                LiteralNode valueNode = new LiteralNode(parsedValue);
-                                initializeVariable(variableName, valueNode);
-                            } else {
-                                throw new VariableInitializationException("Error: Invalid input format for variable '" + variableName + "'.");
-                            }
+                    List<String> variableNames = new ArrayList<>();
+                    if(match(Token.Type.Identifier)) {
+                        variableNames.add(tokens.get(currentTokenIndex-1).getText());
+                        while(match(Token.Type.Comma)) {
+                            variableNames.add(tokens.get(currentTokenIndex).getText());
+                        }
+                    }
+                    String[] userInputValues = getStrings(declarations.getVariableDeclarations(), variableNames);
+
+                    for (int i = 0; i < variableNames.size(); i++) {
+                        String variableName = variableNames.get(i);
+                        String userInput = userInputValues[i].trim(); // Remove any leading/trailing whitespace
+                        Object parsedValue = parseInput(userInput);
+                        if (parsedValue != null) {
+                            LiteralNode valueNode = new LiteralNode(parsedValue);
+                            initializeVariable(variableName, valueNode);
+                            String dataType = getDataType(variableName, declarations.getVariableDeclarations());
+                            validateAssignmentType(dataType, variableName);
                         } else {
                             throw new InputMismatchException("Error: No input provided for variable '" + variableName + "'.");
                         }
@@ -81,6 +86,32 @@
             }
         }
 
+        private String[] getStrings(List<SingleVariableDeclaration> declarations, List<String> variableNames) throws VariableDeclarationException, VariableInitializationException {
+            if(declarations.isEmpty() && !variableNames.isEmpty()) {
+                throw new VariableDeclarationException("Error: Variables '" + variableNames + "' not declared.");
+            } else {
+                for(SingleVariableDeclaration declaration : declarations) {
+                    for(String varName : variableNames) {
+                        if(!declaration.getVariableNames().contains(varName)) {
+                            throw new VariableDeclarationException("Error: Variable '" + varName + "' not declared.");
+                        }
+                    }
+                }
+            }
+
+
+            Scanner scanner = new Scanner(System.in);
+
+            // Prompt for input once, for all variables
+            String inputLine = scanner.nextLine();
+            String[] userInputValues = inputLine.split(",");
+
+            if (userInputValues.length != variableNames.size()) {
+                throw new InputMismatchException("Error: The number of values provided does not match the number of variables.");
+            }
+            return userInputValues;
+        }
+
         private Object parseInput(String userInput) {
             // Try to parse user input to various data types
             if (userInput.matches("^\\d+$")) {
@@ -88,7 +119,7 @@
             } else if (userInput.matches("^\\d*\\.\\d+$")) {
                 return Float.parseFloat(userInput); // Float
             } else if (userInput.equalsIgnoreCase("true") || userInput.equalsIgnoreCase("false")) {
-                return Boolean.parseBoolean(userInput); // Boolean
+                return userInput; // Boolean
             } else if (userInput.length() == 1) {
                 return userInput.charAt(0); // Character
             }
@@ -96,6 +127,15 @@
         }
 
 
+
+        private String getDataType(String variableName, List<SingleVariableDeclaration> declarations) throws VariableDeclarationException {
+            for (SingleVariableDeclaration declaration : declarations) {
+                if (declaration.getVariableNames().contains(variableName)) {
+                    return declaration.getDataType();
+                }
+            }
+            throw new VariableDeclarationException("Error: Variable '" + variableName + "' not declared.");
+        }
 
         public static final Set<String> RESERVED_WORDS = new HashSet<>(Arrays.asList(
                 "BEGIN", "CODE", "END", "INT", "CHAR", "BOOL", "FLOAT", "DISPLAY",
@@ -373,7 +413,7 @@
                 }
             } else if (match(Token.Type.Scan)) {
                 currentTokenIndex--;
-                scanFunction();
+                scanFunction(variableDeclarationsNode);
             } else {
                 break;
             }
