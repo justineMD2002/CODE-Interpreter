@@ -69,7 +69,7 @@ public class Lexer {
                     }
             }
         }
-        //    printTokens(tokens);
+        //printTokens(tokens);
         return tokens;
     }
 
@@ -86,38 +86,20 @@ public class Lexer {
     private void addSingleCharacterToken(List<Token> tokens, char character, int startPos) {
         Token.Type type;
 
-        if (character == '_') handleIdentifierOrKeyword(tokens, startPos);
+        if(character == '_') handleIdentifierOrKeyword(tokens, startPos);
 
         if (character == '[') {
             StringBuilder charLiteralBuilder = new StringBuilder();
-            while (currentPos < input.length() && input.charAt(currentPos + 1) != ']') {
-                char nextChar = input.charAt(currentPos + 1);
+            char nextChar = input.charAt(currentPos + 1);
+
+            if (currentPos + 1 < input.length() && isValidEscapeChar(nextChar)) {
                 charLiteralBuilder.append(nextChar);
                 currentPos++;
-            }
 
-            if (currentPos + 1 < input.length() && input.charAt(currentPos + 2) == ']') {
-                char nextChar = input.charAt(currentPos + 1);
-                charLiteralBuilder.append(nextChar);
-                String charLiteral = charLiteralBuilder.toString();
-                tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
-                currentPos += 3;
-                return;
-            } else if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == ']') {
-                String charLiteral = charLiteralBuilder.toString();
-                tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
-                currentPos += 2;
-                return;
-            char nextChar = input.charAt(currentPos + 1); 
-        
-            if (currentPos + 1 < input.length() && isValidEscapeChar(nextChar)) {
-                charLiteralBuilder.append(nextChar); 
-                currentPos++; 
-        
                 if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == ']') {
                     String charLiteral = charLiteralBuilder.toString();
                     tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
-                    currentPos += 2; 
+                    currentPos += 2;
                     return;
                 } else {
                     throw new RuntimeException("Unclosed or invalid character literal starting at position " + startPos);
@@ -127,7 +109,7 @@ public class Lexer {
             }
         }
 
-        if (character == '\'') {
+        if(character == '\'') {
             StringBuilder charLiteralBuilder = new StringBuilder();
 
             while (currentPos + 1 < input.length() && input.charAt(currentPos + 1) != '\'') {
@@ -146,8 +128,9 @@ public class Lexer {
             }
         }
 
-        if (character == '\"') {
+        if(character == '\"') {
             StringBuilder charLiteralBuilder = new StringBuilder();
+
             while (currentPos + 1 < input.length() && input.charAt(currentPos + 1) != '\"') {
                 char nextChar = input.charAt(currentPos + 1);
                 charLiteralBuilder.append(nextChar);
@@ -156,12 +139,7 @@ public class Lexer {
 
             if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\"') {
                 String charLiteral = charLiteralBuilder.toString();
-                if(charLiteral.equals("TRUE") || charLiteral.equals("FALSE")) {
-
-                    tokens.add(new Token(Token.Type.BooleanLiteral, charLiteral, startPos));
-                } else {
-                    tokens.add(new Token(Token.Type.StringLiteral, charLiteral, startPos));
-                }
+                tokens.add(new Token(Token.Type.BooleanLiteral, charLiteral, startPos));
                 currentPos += 2;
                 return;
             } else {

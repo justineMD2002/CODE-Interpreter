@@ -39,9 +39,13 @@
         if(match(Token.Type.BeginContainer)) {
             ASTNode variableDeclarations = variableDeclarations();
             reinitializeVariable((VariableDeclarationsNode) variableDeclarations);
-            ASTNode executableCode = executableCode();
             scanFunction();
+            ASTNode executableCode = executableCode();
 
+            //checking the index
+            //System.out.println("Current token index: " + currentTokenIndex);
+            //System.out.println("Current token type: " + tokens.get(currentTokenIndex).getType());
+            //System.out.println("Current token text: " + tokens.get(currentTokenIndex).getText());
             if(match(Token.Type.EndContainer)) {
                 if(tokens.size() == currentTokenIndex) {
                     return new ProgramNode(variableDeclarations, executableCode);
@@ -62,19 +66,25 @@
                 if (match(Token.Type.Colon)) {
                     List<String> variableNames = variableList();
                     Scanner scanner = new Scanner(System.in);
-                    for (String variableName : variableNames) {
-                        System.out.print("Enter value for " + variableName + ": ");
-                        if (scanner.hasNext()) {
-                            String userInput = scanner.next();
-                            Object parsedValue = parseInput(userInput);
-                            if (parsedValue != null) {
-                                LiteralNode valueNode = new LiteralNode(parsedValue);
-                                initializeVariable(variableName, valueNode);
-                            } else {
-                                throw new VariableInitializationException("Error: Invalid input format for variable '" + variableName + "'.");
-                            }
+
+                    // Prompt for input once, for all variables
+                    System.out.print("Enter the values for " + String.join(" and ", variableNames) + ": ");
+                    String inputLine = scanner.nextLine();
+                    String[] userInputValues = inputLine.split(",");
+
+                    if (userInputValues.length != variableNames.size()) {
+                        throw new InputMismatchException("Error: The number of values provided does not match the number of variables.");
+                    }
+
+                    for (int i = 0; i < variableNames.size(); i++) {
+                        String variableName = variableNames.get(i);
+                        String userInput = userInputValues[i].trim(); // Remove any leading/trailing whitespace
+                        Object parsedValue = parseInput(userInput);
+                        if (parsedValue != null) {
+                            LiteralNode valueNode = new LiteralNode(parsedValue);
+                            initializeVariable(variableName, valueNode);
                         } else {
-                            throw new InputMismatchException("Error: No input provided for variable '" + variableName + "'.");
+                            throw new VariableInitializationException("Error: Invalid input format for variable '" + variableName + "'.");
                         }
                     }
                 } else {
@@ -394,7 +404,6 @@
     }
 
 
-    
 
 
     private DisplayNode displayFunction() throws DisplayException {
@@ -406,13 +415,13 @@
                         // Check if the variable is initialized
                         String variableName = tokens.get(currentTokenIndex - 1).getText();
                         LiteralNode value = variableInitializer.getValue(variableName);
-    
+
                         if (value != null) {
                             stringBuilder.append(value.getValue()); // Append the value to the StringBuilder
                         } else {
                             throw new DisplayException("Variable '" + variableName + "' is not initialized.");
                         }
-                    } else if (match(Token.Type.Escape)) {  
+                    } else if (match(Token.Type.Escape)) {
                         // Handle escape character
                         String escapeSequence = tokens.get(currentTokenIndex - 1).getText();
                         // Append the escape character to the output string
@@ -434,11 +443,9 @@
         }
         return null;
     }
-    
 
 
-
-    private Object parseExpression() throws VariableInitializationException {
+        private Object parseExpression() throws VariableInitializationException {
         ASTNode expr = expr();
         if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
             LiteralNode val = arithmeticExpressionNode.evaluateExpression();
