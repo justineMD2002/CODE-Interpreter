@@ -1,4 +1,4 @@
 BEGIN CODE
-    SCAN: a, b
-    
+    SCAN: x,y
+    DISPLAY: x&y
 END CODE

@@ -1,7 +1,4 @@
 BEGIN CODE
-INT x = 5
-CHAR c= 't'
-DISPLAY: x
-DISPLAY: c
-DISPLAY: "TRUE"
+    SCAN: x,y
+    DISPLAY: x&y
 END CODE

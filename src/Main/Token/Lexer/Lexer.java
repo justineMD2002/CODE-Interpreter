@@ -69,7 +69,7 @@ public class Lexer {
                     }
             }
         }
-    //    printTokens(tokens);
+        //printTokens(tokens);
         return tokens;
     }
 
@@ -90,16 +90,16 @@ public class Lexer {
 
         if (character == '[') {
             StringBuilder charLiteralBuilder = new StringBuilder();
-            char nextChar = input.charAt(currentPos + 1); 
-        
+            char nextChar = input.charAt(currentPos + 1);
+
             if (currentPos + 1 < input.length() && isValidEscapeChar(nextChar)) {
-                charLiteralBuilder.append(nextChar); 
-                currentPos++; 
-        
+                charLiteralBuilder.append(nextChar);
+                currentPos++;
+
                 if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == ']') {
                     String charLiteral = charLiteralBuilder.toString();
                     tokens.add(new Token(Token.Type.Escape, charLiteral, startPos));
-                    currentPos += 2; 
+                    currentPos += 2;
                     return;
                 } else {
                     throw new RuntimeException("Unclosed or invalid character literal starting at position " + startPos);
@@ -163,10 +163,10 @@ public class Lexer {
                 break;
             case '[':
                 type = Token.Type.SquareBOpen;
-                break;  
+                break;
             case ']':
                 type = Token.Type.SquareBClose;
-                break;  
+                break;
             case '&':
                 type = Token.Type.Concat;
                 break;
@@ -239,7 +239,7 @@ public class Lexer {
     private void handleNumberToken(List<Token> tokens, int tokenStartPos) {
         StringBuilder text = new StringBuilder();
         boolean hasDecimal = false;
-    
+
         while (currentPos < input.length() && (Character.isDigit(input.charAt(currentPos)) || input.charAt(currentPos) == '.')) {
             char currentChar = input.charAt(currentPos);
             if (currentChar == '.') {
@@ -251,7 +251,7 @@ public class Lexer {
             text.append(currentChar);
             currentPos++;
         }
-        
+
         tokens.add(new Token(hasDecimal ? Token.Type.NumFloat : Token.Type.Num, text.toString(), tokenStartPos));
     }
 
@@ -299,7 +299,7 @@ public class Lexer {
             case "BEGIN":
                 if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 4 < input.length() && input.substring(currentPos + 1, currentPos + 5).equals("CODE")) {
                     tokens.add(new Token(Token.Type.BeginContainer, "BEGIN CODE", tokenStartPos));
-                    currentPos += 5; 
+                    currentPos += 5;
                     return;
                 }
                 type = Token.Type.BeginContainer;
@@ -307,7 +307,7 @@ public class Lexer {
             case "END":
                 if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.substring(currentPos + 1, currentPos + 5).equals("CODE")) {
                     tokens.add(new Token(Token.Type.EndContainer, "END CODE", tokenStartPos));
-                    currentPos += 5; 
+                    currentPos += 5;
                     return;
                 }
                 type = Token.Type.EndContainer;
@@ -318,7 +318,7 @@ public class Lexer {
             case "ELSE":
                 if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.substring(currentPos + 1, currentPos + 3).equals("IF")) {
                     tokens.add(new Token(Token.Type.IfElse, "ELSE IF", tokenStartPos));
-                    currentPos += 3; 
+                    currentPos += 3;
                     return;
                 }
                 type = Token.Type.Else;
@@ -332,7 +332,7 @@ public class Lexer {
         }
         tokens.add(new Token(type, identifier, tokenStartPos));
     }
-    
+
     private void printTokens(List<Token> tokens) {
         for (int i = 0; i < tokens.size(); i++) {
             Token token = tokens.get(i);
