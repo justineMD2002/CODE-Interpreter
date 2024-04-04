@@ -1,6 +1,5 @@
+# asdasdasd
 BEGIN CODE
-    FLOAT x, y, x1, y1
-    FLOAT a
-    x = 1.0
-    DISPLAY: x
+END CODE
+BEGIN CODE
 END CODE

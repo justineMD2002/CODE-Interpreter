@@ -338,6 +338,22 @@
                     LiteralNode val = arithmeticExpressionNode.evaluateExpression();
                     return val.getValue();
                 }
+            } else if (match(Token.Type.Negation)) {
+                if (((tokens.get(currentTokenIndex + 1).getType() == Token.Type.Plus || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Minus ||
+                        tokens.get(currentTokenIndex + 1).getType() == Token.Type.Times || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Divide ||
+                        tokens.get(currentTokenIndex + 1).getType() == Token.Type.Modulo) && (match(Token.Type.Num) || match(Token.Type.NumFloat))) ||
+                        match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(") ) {
+                    currentTokenIndex-=2;
+                    ASTNode expr = expr();
+                    if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
+                        LiteralNode val = arithmeticExpressionNode.evaluateExpression();
+                        return val.getValue();
+                    }
+                } else if (match(Token.Type.Num)) {
+                    return -(Integer.parseInt(tokens.get(currentTokenIndex-1).getText()));
+                } else if (match(Token.Type.NumFloat)) {
+                    return -(Float.parseFloat(tokens.get(currentTokenIndex-1).getText()));
+                }
             } else if(match(Token.Type.Num)) {
                 return Integer.parseInt(value);
             } else if(match(Token.Type.NumFloat)) {
@@ -466,18 +482,48 @@
     
 
 
-    private void displayFunction() throws DisplayException {
+    private void displayFunction() throws DisplayException, VariableInitializationException {
         if (match(Token.Type.Print)) {
             StringBuilder stringBuilder = new StringBuilder();
             boolean concatEncountered = true;
             if (match(Token.Type.Colon)) {
                 while (true) {
-                    if (match(Token.Type.Identifier)) {
+                    if (((tokens.get(currentTokenIndex + 1).getType() == Token.Type.Plus || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Minus ||
+                            tokens.get(currentTokenIndex + 1).getType() == Token.Type.Times || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Divide ||
+                            tokens.get(currentTokenIndex + 1).getType() == Token.Type.Modulo) && (match(Token.Type.Num) || match(Token.Type.NumFloat))) ||
+                            match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(") ) {
+                        currentTokenIndex--;
+                        ASTNode expr = expr();
+                        if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
+                            LiteralNode val = arithmeticExpressionNode.evaluateExpression();
+                            stringBuilder.append(val.getValue());
+                        }
+                    }else if (match(Token.Type.Negation)) {
+                        if (((tokens.get(currentTokenIndex + 1).getType() == Token.Type.Plus || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Minus ||
+                                tokens.get(currentTokenIndex + 1).getType() == Token.Type.Times || tokens.get(currentTokenIndex + 1).getType() == Token.Type.Divide ||
+                                tokens.get(currentTokenIndex + 1).getType() == Token.Type.Modulo) && (match(Token.Type.Num) || match(Token.Type.NumFloat))) ||
+                                match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(") ) {
+                            currentTokenIndex-=2;
+                            ASTNode expr = expr();
+                            if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
+                                LiteralNode val = arithmeticExpressionNode.evaluateExpression();
+                                stringBuilder.append(val.getValue());
+                            }
+                        } else if (match(Token.Type.Num)) {
+                            stringBuilder.append(-(Integer.parseInt(tokens.get(currentTokenIndex-1).getText())));
+                        } else if (match(Token.Type.NumFloat)) {
+                            stringBuilder.append(-(Float.parseFloat(tokens.get(currentTokenIndex-1).getText())));
+                        }
+                    } else if (match(Token.Type.Identifier)) {
                         // Check if the variable is initialized
                         String variableName = tokens.get(currentTokenIndex - 1).getText();
                         LiteralNode value = variableInitializer.getValue(variableName);
-
-                        if (value != null) {
+                        currentTokenIndex--;
+                        ASTNode expr = expr();
+                        if(expr instanceof ArithmeticExpressionNode arithmeticExpressionNode) {
+                            LiteralNode val = arithmeticExpressionNode.evaluateExpression();
+                            stringBuilder.append(val.getValue());
+                        } else if (value != null) {
                             stringBuilder.append(value.getValue());
                         } else {
                             throw new DisplayException("Variable '" + variableName + "' is not initialized.");
@@ -570,7 +616,13 @@
 
 
     private ASTNode factor() throws VariableInitializationException {
-        if(match(Token.Type.Num)) {
+        if (match(Token.Type.Negation)) {
+            if (match(Token.Type.Num)) {
+                return new LiteralNode(-(Integer.parseInt(tokens.get(currentTokenIndex-1).getText())));
+            } else if (match(Token.Type.NumFloat)) {
+                return new LiteralNode(-(Float.parseFloat(tokens.get(currentTokenIndex-1).getText())));
+            }
+        } else if(match(Token.Type.Num)) {
             return new LiteralNode(Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));
         } else if(match(Token.Type.Identifier)) {
             return new LiteralNode(variableInitializer.getValue(tokens.get(currentTokenIndex - 1).getText()).getValue());
