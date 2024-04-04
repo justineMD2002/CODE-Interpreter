@@ -1,8 +1,6 @@
 BEGIN CODE
     FLOAT x, y, x1, y1
-    DISPLAY: "Enter value for x and y: "
-    SCAN: x,y
-    DISPLAY: "Enter value for x1 and y1: "
-    SCAN: x1,y1
-    DISPLAY: x & [$] & [$] & x1 & $ & y & ', ' & y1
+    FLOAT a
+    x = 1.0
+    DISPLAY: x
 END CODE

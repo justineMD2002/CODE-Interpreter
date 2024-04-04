@@ -10,6 +10,7 @@
         private final List<Token> tokens;
         private int currentTokenIndex;
         private final VariableInitializerNode variableInitializer = new VariableInitializerNode();
+        private final Set<String> declaredVariables = new HashSet<>();
 
 
         public Parser(List<Token> tokens) {
@@ -188,7 +189,12 @@
                     if(isReservedVariable(variable.toLowerCase())) {
                         throw new VariableDeclarationException("Error: Variable name '" + variable + "' is a reserved word.");
                     }
+                    if (declaredVariables.contains(variable)) {
+                        throw new VariableDeclarationException("Error: Variable '" + variable + "' is redeclared.");
+                    }
                     validateAssignmentType(dataType, variable);
+                    declaredVariables.add(variable);
+
                 }
                 if(variables.isEmpty()) {
                     throw new VariableDeclarationException("Error: Found Data Type token but variable list is empty.");
