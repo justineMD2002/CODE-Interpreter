@@ -1,5 +1,5 @@
-# asdasdasd
 BEGIN CODE
+    BOOL x = "TRUE"
+    DISPLAY: x AND "TRUE"
 END CODE
-BEGIN CODE
 END CODE

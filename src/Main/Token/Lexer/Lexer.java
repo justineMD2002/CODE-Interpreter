@@ -69,7 +69,7 @@ public class Lexer {
                     }
             }
         }
-        //    printTokens(tokens);
+//            printTokens(tokens);
         return tokens;
     }
 
@@ -139,7 +139,11 @@ public class Lexer {
 
             if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\"') {
                 String charLiteral = charLiteralBuilder.toString();
-                tokens.add(new Token(Token.Type.BooleanLiteral, charLiteral, startPos));
+                if(charLiteral.equals("TRUE") || charLiteral.equals("FALSE")) {
+                    tokens.add(new Token(Token.Type.BooleanLiteral, charLiteral, startPos));
+                } else {
+                    tokens.add(new Token(Token.Type.StringLiteral, charLiteral, startPos));
+                }
                 currentPos += 2;
                 return;
             } else {
@@ -299,10 +303,6 @@ public class Lexer {
                 break;
             case "FLOAT":
                 type = Token.Type.Float;
-                break;
-            case "TRUE":
-            case "FALSE":
-                type = Token.Type.BooleanLiteral;
                 break;
             case "BEGIN":
                 if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 4 < input.length() && input.substring(currentPos + 1, currentPos + 5).equals("CODE")) {

@@ -21,4 +21,7 @@ public class VariableInitializerNode extends ASTNode {
     public LiteralNode getValue(String variableName) {
         return initializedVariables.get(variableName);
     }
+    public void clear() {
+        initializedVariables.clear();
+    }
 }

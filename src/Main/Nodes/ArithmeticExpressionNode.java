@@ -2,7 +2,7 @@ package Main.Nodes;
 
 import Main.Token.Token;
 
-public class ArithmeticExpressionNode extends ASTNode {
+public class ArithmeticExpressionNode extends ExpressionNode {
     private final ASTNode rightOperand;
     private final ASTNode leftOperand;
 
