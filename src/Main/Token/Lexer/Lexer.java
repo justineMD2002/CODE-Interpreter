@@ -65,7 +65,7 @@ public class Lexer {
                     } else if (Character.isLetter(lookahead) || lookahead == '_') {
                         handleIdentifierOrKeyword(tokens, tokenStartPos);
                     } else {
-                        throw new RuntimeException("Unknown character '" + lookahead + "' at position " + currentPos);
+                        throw new RuntimeException("ERROR: Unknown character '" + lookahead + "' at position " + currentPos);
                     }
             }
         }
@@ -102,10 +102,10 @@ public class Lexer {
                     currentPos += 2;
                     return;
                 } else {
-                    throw new RuntimeException("Unclosed or invalid character literal starting at position " + startPos);
+                    throw new RuntimeException("ERROR: Unclosed or invalid character literal starting at position " + startPos);
                 }
             } else {
-                throw new RuntimeException("Invalid character following '[' at position " + (startPos + 1));
+                throw new RuntimeException("ERROR: Invalid character following '[' at position " + (startPos + 1));
             }
         }
 
@@ -124,7 +124,7 @@ public class Lexer {
                 currentPos += 2;
                 return;
             } else {
-                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+                throw new RuntimeException("ERROR: Unclosed character literal starting at position " + startPos);
             }
         }
 
@@ -147,7 +147,7 @@ public class Lexer {
                 currentPos += 2;
                 return;
             } else {
-                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+                throw new RuntimeException("ERROR: Unclosed character literal starting at position " + startPos);
             }
         }
 
@@ -192,7 +192,7 @@ public class Lexer {
                 type = Token.Type.Times;
                 break;
             default:
-                throw new RuntimeException("Unknown character '" + character + "' at position " + currentPos);
+                throw new RuntimeException("ERROR: Unknown character '" + character + "' at position " + currentPos);
         }
         tokens.add(new Token(type, Character.toString(character), startPos));
     }
@@ -256,7 +256,7 @@ public class Lexer {
             char currentChar = input.charAt(currentPos);
             if (currentChar == '.') {
                 if (hasDecimal) {
-                    throw new RuntimeException("Invalid floating-point number format at position " + currentPos);
+                    throw new RuntimeException("ERROR: Invalid floating-point number format at position " + currentPos);
                 }
                 hasDecimal = true;
             }
@@ -335,7 +335,7 @@ public class Lexer {
                 if (Character.isLetter(identifier.charAt(0)) || identifier.charAt(0) == '_') {
                     type = Token.Type.Identifier;
                 } else {
-                    throw new RuntimeException("Invalid identifier '" + identifier + "' at position " + tokenStartPos);
+                    throw new RuntimeException("ERROR: Invalid identifier '" + identifier + "' at position " + tokenStartPos);
                 }
         }
         tokens.add(new Token(type, identifier, tokenStartPos));
@@ -344,7 +344,7 @@ public class Lexer {
     private void printTokens(List<Token> tokens) {
         for (int i = 0; i < tokens.size(); i++) {
             Token token = tokens.get(i);
-            System.out.println("Token " + i + ": Type = " + token.getType() + ", Text = '" + token.getText() + "', StartPos = " + token.getStartPos());
+            System.out.println("ERROR: Token " + i + ": Type = " + token.getType() + ", Text = '" + token.getText() + "', StartPos = " + token.getStartPos());
         }
     }
 }

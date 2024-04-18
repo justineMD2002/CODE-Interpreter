@@ -66,7 +66,6 @@
 
 
         private void scanFunction(VariableDeclarationsNode declarations) {
-
                 try {
                     if (match(Token.Type.Scan)) {
                         if (match(Token.Type.Colon)) {
@@ -110,11 +109,9 @@
                 if(declarations.isEmpty() && !variableNames.isEmpty()) {
                     throw new VariableDeclarationException("ERROR: Variables '" + variableNames + "' not declared.");
                 } else {
-                    for(SingleVariableDeclaration declaration : declarations) {
-                        for(String varName : variableNames) {
-                            if(!declaration.getVariableNames().contains(varName)) {
-                                throw new VariableDeclarationException("ERROR: Variable '" + varName + "' not declared.");
-                            }
+                    for(String varName : variableNames) {
+                        if(declarations.stream().noneMatch(declaration -> declaration.getVariableNames().contains(varName))) {
+                            throw new VariableDeclarationException("ERROR: Variable '" + varName + "' not declared.");
                         }
                     }
                 }
@@ -260,7 +257,6 @@
                     Object assignmentValue = assignment();
                     LiteralNode value;
                     if(assignmentValue != null) {
-                        //                System.out.println("not null");
                         while(assignmentValue == "continue") {
                             dominoInitializedVariables.add(tokens.get(currentTokenIndex-1).getText());
                             variableNames.add(tokens.get(currentTokenIndex-1).getText());
@@ -328,6 +324,8 @@
                 variableName = tokens.get(currentTokenIndex - 1).getText();
             } else if(isReservedVariable(tokens.get(currentTokenIndex).getText())) {
                 throw new VariableDeclarationException("ERROR: Variable name '" + tokens.get(currentTokenIndex).getText() + "' is a reserved word.");
+            } else {
+                throw new VariableDeclarationException("ERROR: Invalid variable name format. It should start with a letter or an underscore only.");
             }
             return variableName;
         }
@@ -502,8 +500,8 @@
         try {
             while(true) {
                 if (match(Token.Type.Print)) {
-                    currentTokenIndex--;
-                    displayFunction();
+                    DisplayNode displayNode = (DisplayNode) displayFunction();
+                    System.out.print(displayNode.getOutput());
                 } else if (match(Token.Type.Identifier)) {
                     if (match(Token.Type.Assign)) {
                         currentTokenIndex -= 2;
@@ -515,6 +513,11 @@
                 } else {
                     break;
                 }
+            }
+
+            if(DataType()) {
+                currentTokenIndex--;
+                throw new SyntaxErrorException("ERROR: Variable declaration found after executable code.");
             }
         } catch (VariableInitializationException | DisplayException | SyntaxErrorException v) {
             errorCount++;
@@ -575,105 +578,99 @@
         if (exprNode != null) {
             return exprNode;
         } else {
-            throw new SyntaxErrorException("ERROR: Invalid expression format.");
+            throw new SyntaxErrorException("ERROR: Invalid parsing of expression. Null value found.");
         }
     }
     
 
 
-    private void displayFunction() throws DisplayException, VariableInitializationException, SyntaxErrorException {
-        if (match(Token.Type.Print)) {
-            StringBuilder stringBuilder = new StringBuilder();
-            if (match(Token.Type.Colon)) {
-                while (true) {
-                    if (negationHandler()) {
-                        currentTokenIndex--;
-                        ASTNode expr = expressionHandler();
-                        if( expr instanceof ExpressionNode expressionNode) {
-                            LiteralNode val = expressionNode.evaluateExpression();
-                            stringBuilder.append(val.getValue());
-                        }
-                    } else if (match(Token.Type.Negation)) {
-                        if (negationHandler()) {
-                            currentTokenIndex-=2;
-                            ASTNode expr = expressionHandler();
-                            if( expr instanceof ExpressionNode expressionNode) {
-                                LiteralNode val = expressionNode.evaluateExpression();
-                                stringBuilder.append(val.getValue());
-                            }
-                        } else if (match(Token.Type.Num)) {
-                            stringBuilder.append(-(Integer.parseInt(tokens.get(currentTokenIndex-1).getText())));
-                        } else if (match(Token.Type.NumFloat)) {
-                            stringBuilder.append(-(Float.parseFloat(tokens.get(currentTokenIndex-1).getText())));
-                        }
-                    } else if(match(Token.Type.Not)) {
-                        ASTNode expr = expressionHandler();
-                        if( expr instanceof ExpressionNode expressionNode) {
-                            LiteralNode val = expressionNode.evaluateExpression();
-                            stringBuilder.append(val.getValue());
-                        }
-                    } else if (match(Token.Type.Identifier)) {
-                        // Check if the variable is initialized
-                        String variableName = tokens.get(currentTokenIndex - 1).getText();
-                        LiteralNode value = variableInitializer.getValue(variableName);
-                        if(value == null) {
-                            throw new VariableInitializationException("ERROR: Variable '" + variableName + "' is not initialized.");
-                        }
-                        currentTokenIndex--;
-                        ASTNode expr = expressionHandler();
-                        if( expr instanceof ExpressionNode expressionNode) {
-                            value = expressionNode.evaluateExpression();
-                        }
-                        stringBuilder.append(value.getValue());
-                    } else if (match(Token.Type.Escape)) {
-                        // Handle escape character
-                        String escapeSequence = tokens.get(currentTokenIndex - 1).getText();
-                        // Append the escape character to the output string
-                        stringBuilder.append(escapeSequence);
-
-                    } else if (match(Token.Type.Num) || match(Token.Type.NumFloat) ||
-                            match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral) ||
-                            match(Token.Type.StringLiteral)) {
-                        stringBuilder.append(tokens.get(currentTokenIndex - 1).getText());
-                        if (match(Token.Type.Concat)) {
-                            continue;
-                        } else {
-                            break;
-                        }
-                    } else if (match(Token.Type.NewLine)) {
-                        stringBuilder.append(System.lineSeparator());
-                        if (match(Token.Type.Concat)) {
-                            continue;
-                        } else {
-                            break;
-                        }
-                    } else {
-                        throw new DisplayException("ERROR: Invalid display statement format.");
+    private ASTNode displayFunction() throws DisplayException, VariableInitializationException, SyntaxErrorException {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (match(Token.Type.Colon)) {
+            while (true) {
+                if (negationHandler()) {
+                    currentTokenIndex--;
+                    ASTNode expr = expressionHandler();
+                    if( expr instanceof ExpressionNode expressionNode) {
+                        LiteralNode val = expressionNode.evaluateExpression();
+                        stringBuilder.append(val.getValue());
                     }
+                } else if (match(Token.Type.Negation)) {
+                    if (negationHandler()) {
+                        currentTokenIndex-=2;
+                        ASTNode expr = expressionHandler();
+                        if( expr instanceof ExpressionNode expressionNode) {
+                            LiteralNode val = expressionNode.evaluateExpression();
+                            stringBuilder.append(val.getValue());
+                        }
+                    } else if (match(Token.Type.Num)) {
+                        stringBuilder.append(-(Integer.parseInt(tokens.get(currentTokenIndex-1).getText())));
+                    } else if (match(Token.Type.NumFloat)) {
+                        stringBuilder.append(-(Float.parseFloat(tokens.get(currentTokenIndex-1).getText())));
+                    }
+                } else if(match(Token.Type.Not)) {
+                    ASTNode expr = expressionHandler();
+                    if( expr instanceof ExpressionNode expressionNode) {
+                        LiteralNode val = expressionNode.evaluateExpression();
+                        stringBuilder.append(val.getValue());
+                    }
+                } else if (match(Token.Type.Identifier)) {
+                    // Check if the variable is initialized
+                    String variableName = tokens.get(currentTokenIndex - 1).getText();
+                    LiteralNode value = variableInitializer.getValue(variableName);
+                    if(value == null) {
+                        throw new VariableInitializationException("ERROR: Variable '" + variableName + "' is not initialized.");
+                    }
+                    currentTokenIndex--;
+                    ASTNode expr = expressionHandler();
+                    if( expr instanceof ExpressionNode expressionNode) {
+                        value = expressionNode.evaluateExpression();
+                    }
+                    stringBuilder.append(value.getValue());
+                } else if (match(Token.Type.Escape)) {
+                    // Handle escape character
+                    String escapeSequence = tokens.get(currentTokenIndex - 1).getText();
+                    // Append the escape character to the output string
+                    stringBuilder.append(escapeSequence);
 
+                } else if (match(Token.Type.Num) || match(Token.Type.NumFloat) ||
+                        match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral) ||
+                        match(Token.Type.StringLiteral)) {
+                    stringBuilder.append(tokens.get(currentTokenIndex - 1).getText());
                     if (match(Token.Type.Concat)) {
                         continue;
                     } else {
-                        if(tokens.get(currentTokenIndex).getType() == Token.Type.NewLine ||
-                                tokens.get(currentTokenIndex).getType() == Token.Type.Identifier ||
-                                tokens.get(currentTokenIndex).getType() == Token.Type.StringLiteral ||
-                                tokens.get(currentTokenIndex).getType() == Token.Type.CharLiteral ||
-                                tokens.get(currentTokenIndex).getType() == Token.Type.Num ||
-                                tokens.get(currentTokenIndex).getType() == Token.Type.NumFloat ||
-                                tokens.get(currentTokenIndex).getType() == Token.Type.BooleanLiteral) {
-                            throw new DisplayException("ERROR: Invalid display statement format.");
-                        }
                         break;
                     }
+                } else if (match(Token.Type.NewLine)) {
+                    stringBuilder.append(System.lineSeparator());
+                    if (match(Token.Type.Concat)) {
+                        continue;
+                    } else {
+                        break;
+                    }
+                } else {
+                    throw new DisplayException("ERROR: Invalid display statement format.");
+                }
 
+                if (match(Token.Type.Concat)) {
+                    continue;
+                } else {
+                    if(tokens.get(currentTokenIndex).getType() == Token.Type.NewLine ||
+                            tokens.get(currentTokenIndex).getType() == Token.Type.Identifier ||
+                            tokens.get(currentTokenIndex).getType() == Token.Type.StringLiteral ||
+                            tokens.get(currentTokenIndex).getType() == Token.Type.CharLiteral ||
+                            tokens.get(currentTokenIndex).getType() == Token.Type.Num ||
+                            tokens.get(currentTokenIndex).getType() == Token.Type.NumFloat ||
+                            tokens.get(currentTokenIndex).getType() == Token.Type.BooleanLiteral) {
+                        throw new DisplayException("ERROR: Invalid display statement format.");
+                    }
+                    break;
                 }
-                System.out.print(stringBuilder);
-                if(!stringBuilder.isEmpty()) {
-                    System.out.println();
-                }
+
             }
         }
-
+        return new DisplayNode(stringBuilder.toString());
     }
     
 
@@ -686,7 +683,7 @@
                 if (rightOperand != null) {
                     logicalAnd = new LogicalExpressionNode(logicalAnd, operator, rightOperand);
                 } else {
-                    throw new SyntaxErrorException("ERROR: Invalid expression format.");
+                    throw new SyntaxErrorException("ERROR: " + tokens.get(currentTokenIndex).getType() + " " + tokens.get(currentTokenIndex).getText() + " is not a valid operand.");
                 }
             }
         }
@@ -703,7 +700,7 @@
                 if (rightOperand != null) {
                     comp = new LogicalExpressionNode(comp, operator, rightOperand);
                 } else {
-                    throw new SyntaxErrorException("ERROR: Invalid expression format.");
+                    throw new SyntaxErrorException("ERROR: " + tokens.get(currentTokenIndex).getType() + " " + tokens.get(currentTokenIndex).getText() + " is not a valid operand.");
                 }
             }
         }
@@ -721,7 +718,7 @@
                 if (rightOperand != null) {
                     arithmeticExpr = new ComparisonExpressionNode(arithmeticExpr, operator, rightOperand);
                 } else {
-                    throw new SyntaxErrorException("ERROR: Invalid expression format.");
+                    throw new SyntaxErrorException("ERROR: " + tokens.get(currentTokenIndex).getType() + " " + tokens.get(currentTokenIndex).getText() + " is not a valid operand.");
                 }
             }
         }
@@ -739,7 +736,7 @@
                 if (rightOperand != null) {
                     term = new ArithmeticExpressionNode(term, operator, rightOperand);
                 } else {
-                    throw new SyntaxErrorException("ERROR: Invalid expression format.");
+                    throw new SyntaxErrorException("ERROR: " + tokens.get(currentTokenIndex).getType() + " " + tokens.get(currentTokenIndex).getText() + " is not a valid operand.");
                 }
             }
         }
@@ -778,7 +775,7 @@
             if (operand != null) {
                 return new LogicalExpressionNode(operand, type, null);
             } else {
-                throw new SyntaxErrorException("ERROR: Invalid expression format.");
+                throw new SyntaxErrorException("ERROR: NOT operator found but operand to be complemented is missing.");
             }
         } else if (match(Token.Type.Num)) {
             return new LiteralNode(Integer.parseInt(tokens.get(currentTokenIndex - 1).getText()));

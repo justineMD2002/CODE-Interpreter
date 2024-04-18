@@ -21,7 +21,7 @@ public class App {
             }
             int errorCount = getErrorCount(fileContent);
             if (errorCount == 0) {
-                System.out.println("No errors found in CODE.");
+                System.out.println("\nNo errors found in CODE.");
             }
         } catch (IOException e) {
             System.err.println("Error reading file:");
