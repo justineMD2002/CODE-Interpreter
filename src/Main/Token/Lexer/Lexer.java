@@ -8,13 +8,16 @@ import java.util.List;
 public class Lexer {
     private String input;
     private int currentPos = 0;
+    private int lineCount;
 
     public Lexer(String input) {
         this.input = input;
+        lineCount = 0;
     }
 
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
+        lineCount = input.split("\n").length;
         while (currentPos < input.length()) {
             int tokenStartPos = currentPos;
             char lookahead = input.charAt(currentPos);
@@ -71,6 +74,11 @@ public class Lexer {
         }
 //            printTokens(tokens);
         return tokens;
+    }
+    
+
+    public int getLineCount() {
+        return lineCount;
     }
 
     private void skipComment() {
@@ -344,7 +352,7 @@ public class Lexer {
     private void printTokens(List<Token> tokens) {
         for (int i = 0; i < tokens.size(); i++) {
             Token token = tokens.get(i);
-            System.out.println("ERROR: Token " + i + ": Type = " + token.getType() + ", Text = '" + token.getText() + "', StartPos = " + token.getStartPos());
+            System.out.println("Token " + i + ": Type = " + token.getType() + ", Text = '" + token.getText() + "', StartPos = " + token.getStartPos());
         }
     }
 }

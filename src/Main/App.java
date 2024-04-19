@@ -31,13 +31,17 @@ public class App {
         }
     }
 
-    private static int getErrorCount(StringBuilder fileContent) throws BeginContainerMissingException, EndContainerMissingException, VariableInitializationException, DisplayException, VariableDeclarationException {
+    private static int getErrorCount(StringBuilder fileContent) throws BeginContainerMissingException, EndContainerMissingException, VariableInitializationException, DisplayException, VariableDeclarationException, SyntaxErrorException {
         Lexer lexer = new Lexer(fileContent.toString());
         List<Token> tokens = lexer.lex();
+        int lines = lexer.getLineCount();
         int errorCount = 0;
         while (errorCount == 0 && !tokens.isEmpty()) {
             Parser parser = new Parser(tokens);
             ProgramNode program = (ProgramNode) parser.parse();
+            if(parser.getStatementCount() > lines) {
+                throw new SyntaxErrorException("ERROR: Cannot have more than one statement in a single line.");
+            }
             List<Token> sublistToRemove = tokens.subList(0, parser.getCurrentTokenIndex());
             tokens.removeAll(sublistToRemove);
             errorCount = parser.getErrorCount();

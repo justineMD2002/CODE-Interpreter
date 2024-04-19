@@ -11,20 +11,20 @@
         private int currentTokenIndex;
         private final VariableInitializerNode variableInitializer = new VariableInitializerNode();
         private final Set<String> declaredVariables = new HashSet<>();
-        private final List<ASTNode> statements = new ArrayList<>();
-
+        private int statementCount;
         private int errorCount;
 
         public Parser(List<Token> tokens) {
             this.tokens = tokens;
             currentTokenIndex = 0;
             errorCount = 0;
+            statementCount = 0;
         }
 
 
 
         // call parse method to start parsing
-        public ASTNode parse() throws BeginContainerMissingException, EndContainerMissingException, VariableInitializationException, DisplayException {
+        public ASTNode parse() throws BeginContainerMissingException, EndContainerMissingException{
             return program();
         }
 
@@ -46,14 +46,20 @@
             return currentTokenIndex;
         }
 
+        public int getStatementCount() {
+            return statementCount;
+        }
+
 
 
         // Program --> BEGIN CODE VariableDeclarations ExecutableCode END CODE
-        private ASTNode program() throws BeginContainerMissingException, EndContainerMissingException, VariableInitializationException, DisplayException {
+        private ASTNode program() throws BeginContainerMissingException, EndContainerMissingException {
             if(match(Token.Type.BeginContainer)) {
+                statementCount++;
                 ASTNode variableDeclarations = variableDeclarations();
                 ASTNode executableCode = executableCode((VariableDeclarationsNode) variableDeclarations);
                 if(match(Token.Type.EndContainer)) {
+                    statementCount++;
                     return new ProgramNode(variableDeclarations, executableCode);
                 } else {
                     throw new EndContainerMissingException("ERROR: Missing END CODE container.");
@@ -91,7 +97,6 @@
                                     throw new InputMismatchException("ERROR: No input provided for variable '" + variableName + "'.");
                                 }
                             }
-
                         } else {
                             throw new SyntaxErrorException("ERROR: Expected colon (:) after SCAN keyword.");
                         }
@@ -102,6 +107,7 @@
                     System.err.println(i.getMessage());
                     System.exit(1);
                 }
+            statementCount++;
         }
 
         private String[] getStrings(List<SingleVariableDeclaration> declarations, List<String> variableNames) {
@@ -120,7 +126,6 @@
                 System.err.println(v.getMessage());
                 System.exit(1);
             }
-
 
             Scanner scanner = new Scanner(System.in);
 
@@ -199,6 +204,7 @@
             while (true) {
                 SingleVariableDeclaration variable = (SingleVariableDeclaration) variableDeclaration();
                 if (variable != null) {
+                    statementCount++;
                     variables.add(variable);
                 } else {
                     break;
@@ -319,7 +325,7 @@
 
         // VariableName -> Identifier
         private String variableName() throws VariableDeclarationException {
-            String variableName = null;
+            String variableName;
             if (match(Token.Type.Identifier)) {
                 variableName = tokens.get(currentTokenIndex - 1).getText();
             } else if(isReservedVariable(tokens.get(currentTokenIndex).getText())) {
@@ -525,7 +531,6 @@
             System.exit(1);
         }
 
-
         return new ASTNode();
     }
 
@@ -564,6 +569,7 @@
 
                 }
             }
+            statementCount++;
         } catch (VariableInitializationException v) {
             errorCount++;
             System.err.println(v.getMessage());
@@ -640,6 +646,7 @@
                     if (match(Token.Type.Concat)) {
                         continue;
                     } else {
+
                         break;
                     }
                 } else if (match(Token.Type.NewLine)) {
@@ -669,6 +676,7 @@
                 }
 
             }
+            statementCount++;
         }
         return new DisplayNode(stringBuilder.toString());
     }

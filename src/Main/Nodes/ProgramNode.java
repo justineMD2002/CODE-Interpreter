@@ -19,10 +19,4 @@ public class ProgramNode extends ASTNode {
         return executableCode;
     }
 
-    public void displayOutput() {
-        if(executableCode instanceof DisplayNode) {
-            System.out.println(((DisplayNode) executableCode).getOutput());
-        }
-    }
-
 }
