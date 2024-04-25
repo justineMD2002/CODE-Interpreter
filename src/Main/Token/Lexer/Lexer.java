@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lexer {
-    private String input;
+    private final String input;
     private int currentPos = 0;
     private int lineCount;
 
@@ -129,7 +129,7 @@ public class Lexer {
             if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\'') {
                 String charLiteral = charLiteralBuilder.toString();
                 tokens.add(new Token(Token.Type.CharLiteral, charLiteral, startPos));
-                currentPos += 2;
+                currentPos += 1;
                 return;
             } else {
                 throw new RuntimeException("ERROR: Unclosed character literal starting at position " + startPos);
@@ -152,7 +152,7 @@ public class Lexer {
                 } else {
                     tokens.add(new Token(Token.Type.StringLiteral, charLiteral, startPos));
                 }
-                currentPos += 2;
+                currentPos += 1;
                 return;
             } else {
                 throw new RuntimeException("ERROR: Unclosed character literal starting at position " + startPos);
@@ -167,9 +167,9 @@ public class Lexer {
                 type = Token.Type.Plus;
                 break;
             case '-':
-                if(currentPos < input.length() && tokens.getLast().getType() == Token.Type.Num ||
+                if(currentPos < input.length() && (tokens.getLast().getType() == Token.Type.Num ||
                         tokens.getLast().getType() == Token.Type.NumFloat ||
-                        tokens.getLast().getType() == Token.Type.Identifier ||
+                        tokens.getLast().getType() == Token.Type.Identifier) ||
                         (tokens.getLast().getType() == Token.Type.Parentheses && tokens.getLast().getText().equals(")")) ) {
                     type = Token.Type.Minus;
                 }
@@ -285,6 +285,10 @@ public class Lexer {
         Token.Type type;
 
         switch (identifier) {
+            case "TRUE":
+            case "FALSE":
+                throw new RuntimeException("ERROR: Invalid boolean literal value '" + identifier
+                        + "' at position " + tokenStartPos);
             case "AND":
                 type = Token.Type.And;
                 break;
@@ -313,26 +317,28 @@ public class Lexer {
                 type = Token.Type.Float;
                 break;
             case "BEGIN":
-                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 4 < input.length() && input.substring(currentPos + 1, currentPos + 5).equals("CODE")) {
+                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 4 < input.length() && input.startsWith("CODE", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.BeginContainer, "BEGIN CODE", tokenStartPos));
                     currentPos += 5;
-                    return;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("IF", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.BeginIf, "BEGIN IF", tokenStartPos));
+                    currentPos += 3;
                 }
-                type = Token.Type.BeginContainer;
-                break;
+                return;
             case "END":
-                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.substring(currentPos + 1, currentPos + 5).equals("CODE")) {
+                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("CODE", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.EndContainer, "END CODE", tokenStartPos));
                     currentPos += 5;
-                    return;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("IF", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.EndIf, "END IF", tokenStartPos));
+                    currentPos += 3;
                 }
-                type = Token.Type.EndContainer;
-                break;
+                return;
             case "IF":
                 type = Token.Type.If;
                 break;
             case "ELSE":
-                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.substring(currentPos + 1, currentPos + 3).equals("IF")) {
+                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("IF", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.IfElse, "ELSE IF", tokenStartPos));
                     currentPos += 3;
                     return;

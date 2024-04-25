@@ -1,9 +1,10 @@
 package Main;
 
 import Main.ExceptionHandlers.*;
-import Main.Nodes.ProgramNode;
+import Main.Nodes.ASTNodes.ProgramNode;
 import Main.Token.Lexer.Lexer;
 import Main.Token.Lexer.Parser.Parser;
+import Main.Token.Lexer.Parser.SemanticAnalyzer;
 import Main.Token.Token;
 
 import java.io.BufferedReader;
@@ -36,16 +37,14 @@ public class App {
         List<Token> tokens = lexer.lex();
         int lines = lexer.getLineCount();
         int errorCount = 0;
-        while (errorCount == 0 && !tokens.isEmpty()) {
-            Parser parser = new Parser(tokens);
-            ProgramNode program = (ProgramNode) parser.parse();
-            if(parser.getStatementCount() > lines) {
-                throw new SyntaxErrorException("ERROR: Cannot have more than one statement in a single line.");
-            }
-            List<Token> sublistToRemove = tokens.subList(0, parser.getCurrentTokenIndex());
-            tokens.removeAll(sublistToRemove);
-            errorCount = parser.getErrorCount();
-        };
+        Parser parser = new Parser(tokens);
+        ProgramNode program = (ProgramNode) parser.parse();
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(program.getSymbolTable());
+        analyzer.analyze(program);
+        if(parser.getStatementCount() > lines) {
+            throw new SyntaxErrorException("ERROR: Cannot have more than one statement in a single line.");
+        }
+        errorCount = parser.getErrorCount();
         return errorCount;
     }
 }

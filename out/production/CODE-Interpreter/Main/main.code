@@ -1,10 +1,16 @@
 BEGIN CODE
-INT a=100, b=200, c=300
-BOOL d="FALSE"
-
-
-
-
-d = (a < b AND c <>200)
-DISPLAY: 10
+    INT a=100, b=200, c=300
+    BOOL d="TRUE"
+    IF (a == 100)
+    BEGIN IF
+        DISPLAY: a
+    END IF
+    ELSE IF (b == 201)
+    BEGIN IF
+        DISPLAY: b
+    END IF
+    ELSE
+    BEGIN IF
+        DISPLAY: c
+    END IF
 END CODE
