@@ -1,9 +1,8 @@
 package Main.Nodes.ExpressionNodes;
 
-import Main.ExceptionHandlers.VariableInitializationException;
+import Main.ExceptionHandlers.VariableDeclarationException;
 import Main.Nodes.ASTNodes.ASTNode;
 import Main.Nodes.ASTNodes.LiteralNode;
-import Main.Nodes.EvaluableNodes.VariableNode;
 import Main.Nodes.SymbolTable;
 import Main.Token.Token;
 
@@ -31,7 +30,7 @@ public class ArithmeticExpressionNode extends ExpressionNode {
         return operator;
     }
 
-    public LiteralNode evaluateExpression(SymbolTable symbolTable) {
+    public LiteralNode evaluateExpression(SymbolTable symbolTable) throws VariableDeclarationException {
         LiteralNode leftValueNode = evaluate(getLeftOperand(), symbolTable);
         LiteralNode rightValueNode = evaluate(getRightOperand(), symbolTable);
 
@@ -45,7 +44,9 @@ public class ArithmeticExpressionNode extends ExpressionNode {
             float doubleResult = evaluateDoubleExpression(leftValue, rightValue);
             return new LiteralNode(doubleResult);
         } else {
-            throw new IllegalArgumentException("ERROR: Unsupported operand types: " + leftValue.getClass().getSimpleName() + " and " + rightValue.getClass().getSimpleName());
+            String leftSimpleName = leftValue.getClass().getSimpleName().equals("String") ? "BOOL" : leftValue.getClass().getSimpleName();
+            String rightSimpleName = rightValue.getClass().getSimpleName().equals("String") ? "BOOL" : rightValue.getClass().getSimpleName();
+            throw new IllegalArgumentException("ERROR: Unsupported operand types: " + leftSimpleName + " and " + rightSimpleName);
         }
 
     }

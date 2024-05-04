@@ -1,8 +1,8 @@
 package Main.Nodes.ExpressionNodes;
 
+import Main.ExceptionHandlers.VariableDeclarationException;
 import Main.Nodes.ASTNodes.ASTNode;
 import Main.Nodes.ASTNodes.LiteralNode;
-import Main.Nodes.EvaluableNodes.VariableNode;
 import Main.Nodes.SymbolTable;
 import Main.Token.Token;
 
@@ -31,7 +31,7 @@ public class ComparisonExpressionNode extends ExpressionNode {
     }
 
     @Override
-    public LiteralNode evaluateExpression(SymbolTable symbolTable) {
+    public LiteralNode evaluateExpression(SymbolTable symbolTable) throws VariableDeclarationException {
         LiteralNode leftValueNode = evaluate(getLeftOperand(), symbolTable);
         LiteralNode rightValueNode = evaluate(getRightOperand(), symbolTable);
 
@@ -39,22 +39,48 @@ public class ComparisonExpressionNode extends ExpressionNode {
         Object rightValue = rightValueNode.getValue();
 
         if (leftValue instanceof Number && rightValue instanceof Number) {
-            double leftNum = ((Number) leftValue).doubleValue();
-            double rightNum = ((Number) rightValue).doubleValue();
-
-            boolean comparisonResult = switch (getOperator()) {
-                case Less -> leftNum < rightNum;
-                case LessEqual -> leftNum <= rightNum;
-                case Greater -> leftNum > rightNum;
-                case GreaterEqual -> leftNum >= rightNum;
-                case Equals -> leftNum == rightNum;
-                case NotEqual -> leftNum != rightNum;
-                default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator());
-            };
-
-            return comparisonResult ? new LiteralNode("TRUE") : new LiteralNode("FALSE");
+            return compareNumbers((Number) leftValue, (Number) rightValue);
+        } else if(leftValue instanceof Character && rightValue instanceof Character) {
+            return compareCharacters((Character) leftValue, (Character) rightValue);
+        } else if(isBooleanString(leftValue) && isBooleanString(rightValue)) {
+            return compareBooleans(Boolean.parseBoolean(leftValue.toString()), Boolean.parseBoolean(rightValue.toString()));
         } else {
-            throw new IllegalArgumentException("ERROR: Comparison operation can only be applied to numeric types.");
+            throw new IllegalArgumentException("ERROR: Comparison operation can only be applied to numeric, character, and boolean types.");
         }
+    }
+
+    private LiteralNode compareNumbers(Number leftNum, Number rightNum) {
+        boolean comparisonResult = switch (getOperator()) {
+            case Less -> leftNum.doubleValue() < rightNum.doubleValue();
+            case LessEqual -> leftNum.doubleValue() <= rightNum.doubleValue();
+            case Greater -> leftNum.doubleValue() > rightNum.doubleValue();
+            case GreaterEqual -> leftNum.doubleValue() >= rightNum.doubleValue();
+            case Equals -> leftNum.doubleValue() == rightNum.doubleValue();
+            case NotEqual -> leftNum.doubleValue() != rightNum.doubleValue();
+            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator());
+        };
+        return new LiteralNode(comparisonResult ? "TRUE" : "FALSE");
+    }
+
+    private LiteralNode compareCharacters(Character leftChar, Character rightChar) {
+        boolean comparisonResult = switch (getOperator()) {
+            case Equals -> leftChar == rightChar;
+            case NotEqual -> leftChar != rightChar;
+            default -> throw new IllegalArgumentException("ERROR: Cannot apply operation type to value of type Character");
+        };
+        return new LiteralNode(comparisonResult ? "TRUE" : "FALSE");
+    }
+
+    private LiteralNode compareBooleans(boolean leftBool, boolean rightBool) {
+        boolean comparisonResult = switch (getOperator()) {
+            case Equals -> leftBool == rightBool;
+            case NotEqual -> leftBool != rightBool;
+            default -> throw new IllegalArgumentException("ERROR: Cannot apply operation type to value of type BOOL");
+        };
+        return new LiteralNode(comparisonResult ? "TRUE" : "FALSE");
+    }
+
+    private boolean isBooleanString(Object value) {
+        return value instanceof String && (value.equals("TRUE") || value.equals("FALSE"));
     }
 }

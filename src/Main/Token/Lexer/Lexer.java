@@ -181,12 +181,6 @@ public class Lexer {
             case ')':
                 type = Token.Type.Parentheses;
                 break;
-            case '[':
-                type = Token.Type.SquareBOpen;
-                break;
-            case ']':
-                type = Token.Type.SquareBClose;
-                break;
             case '&':
                 type = Token.Type.Concat;
                 break;
@@ -214,11 +208,10 @@ public class Lexer {
             } else {
                 tokens.add(new Token(Token.Type.Greater, ">", tokenStartPos));
             }
-            currentPos++;
         } else {
             tokens.add(new Token(Token.Type.Greater, ">", tokenStartPos));
-            currentPos++;
         }
+        currentPos++;
     }
 
     private void handleLessToken(List<Token> tokens, int tokenStartPos) {
@@ -233,11 +226,10 @@ public class Lexer {
             } else {
                 tokens.add(new Token(Token.Type.Less, "<", tokenStartPos));
             }
-            currentPos++;
         } else {
             tokens.add(new Token(Token.Type.Less, "<", tokenStartPos));
-            currentPos++;
         }
+        currentPos++;
     }
 
     private void handleEqualsToken(List<Token> tokens, int tokenStartPos) {
@@ -249,11 +241,10 @@ public class Lexer {
             } else {
                 tokens.add(new Token(Token.Type.Assign, "=", tokenStartPos));
             }
-            currentPos++;
         } else {
             tokens.add(new Token(Token.Type.Assign, "=", tokenStartPos));
-            currentPos++;
         }
+        currentPos++;
     }
 
     private void handleNumberToken(List<Token> tokens, int tokenStartPos) {
@@ -316,6 +307,9 @@ public class Lexer {
             case "FLOAT":
                 type = Token.Type.Float;
                 break;
+            case "BREAK":
+                type = Token.Type.Break;
+                break;
             case "BEGIN":
                 if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 4 < input.length() && input.startsWith("CODE", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.BeginContainer, "BEGIN CODE", tokenStartPos));
@@ -323,6 +317,9 @@ public class Lexer {
                 } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("IF", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.BeginIf, "BEGIN IF", tokenStartPos));
                     currentPos += 3;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 5 < input.length() && input.startsWith("WHILE", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.BeginWhile, "BEGIN WHILE", tokenStartPos));
+                    currentPos+=6;
                 }
                 return;
             case "END":
@@ -332,6 +329,9 @@ public class Lexer {
                 } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("IF", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.EndIf, "END IF", tokenStartPos));
                     currentPos += 3;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 5 < input.length() && input.startsWith("WHILE", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.EndWhile, "END WHILE", tokenStartPos));
+                    currentPos+=6;
                 }
                 return;
             case "IF":
@@ -344,6 +344,9 @@ public class Lexer {
                     return;
                 }
                 type = Token.Type.Else;
+                break;
+            case "WHILE":
+                type = Token.Type.While;
                 break;
             default:
                 if (Character.isLetter(identifier.charAt(0)) || identifier.charAt(0) == '_') {

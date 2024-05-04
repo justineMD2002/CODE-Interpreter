@@ -1,16 +1,15 @@
 BEGIN CODE
-    INT a=100, b=200, c=300
-    BOOL d="TRUE"
-    IF (a == 100)
-    BEGIN IF
-        DISPLAY: a
-    END IF
-    ELSE IF (b == 201)
-    BEGIN IF
-        DISPLAY: b
-    END IF
-    ELSE
-    BEGIN IF
-        DISPLAY: c
-    END IF
+INT a=100, b=200, c=300, x=1, y
+BOOL d="TRUE"
+WHILE (x < 5)
+BEGIN WHILE
+	y = 1
+	WHILE (y <= 5)
+	BEGIN WHILE
+		DISPLAY: x & " * " & y & " = " & x*y & $
+		y = y + 1
+	END WHILE
+	x = x + 1
+	DISPLAY: $
+END WHILE
 END CODE

@@ -32,11 +32,10 @@ public class App {
         }
     }
 
-    private static int getErrorCount(StringBuilder fileContent) throws BeginContainerMissingException, EndContainerMissingException, VariableInitializationException, DisplayException, VariableDeclarationException, SyntaxErrorException {
+    private static int getErrorCount(StringBuilder fileContent) throws BeginContainerMissingException, EndContainerMissingException, VariableInitializationException, SyntaxErrorException, BreakException, VariableDeclarationException {
         Lexer lexer = new Lexer(fileContent.toString());
         List<Token> tokens = lexer.lex();
         int lines = lexer.getLineCount();
-        int errorCount = 0;
         Parser parser = new Parser(tokens);
         ProgramNode program = (ProgramNode) parser.parse();
         SemanticAnalyzer analyzer = new SemanticAnalyzer(program.getSymbolTable());
@@ -44,7 +43,6 @@ public class App {
         if(parser.getStatementCount() > lines) {
             throw new SyntaxErrorException("ERROR: Cannot have more than one statement in a single line.");
         }
-        errorCount = parser.getErrorCount();
-        return errorCount;
+        return parser.getErrorCount();
     }
 }

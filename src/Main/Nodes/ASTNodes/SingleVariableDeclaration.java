@@ -1,5 +1,4 @@
 package Main.Nodes.ASTNodes;
-import Main.Nodes.ASTNodes.ASTNode;
 import Main.Nodes.EvaluableNodes.VariableNode;
 
 import java.util.*;

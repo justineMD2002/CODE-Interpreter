@@ -25,35 +25,16 @@
             statementCount = 0;
         }
 
+
+
         // call parse method to start parsing
         public ASTNode parse() throws BeginContainerMissingException, EndContainerMissingException, SyntaxErrorException {
             return program();
         }
 
-        private boolean match(Token.Type expectedType) {
-            if (currentTokenIndex < tokens.size() && tokens.get(currentTokenIndex).getType() == expectedType) {
-                if(currentTokenIndex + 1 == tokens.size() && tokens.get(currentTokenIndex).getType() != Token.Type.EndContainer) {
-                    System.err.println("ERROR: Missing END CODE container.");
-                    System.exit(1);
-                }
-                currentTokenIndex++;
-                return true;
-            }
-            return false;
-        }
 
 
-        public int getCurrentTokenIndex() {
-            return currentTokenIndex;
-        }
-
-        public int getStatementCount() {
-            return statementCount;
-        }
-
-
-
-        // Program --> BEGIN CODE VariableDeclarations ExecutableCode END CODE
+        // Program -> BEGIN CODE VariableDeclarations ExecutableCode END CODE / ε.
         private ASTNode program() throws BeginContainerMissingException, EndContainerMissingException, SyntaxErrorException {
             if(match(Token.Type.BeginContainer)) {
                 statementCount++;
@@ -75,146 +56,86 @@
 
 
 
-        private ASTNode scanFunction(VariableDeclarationsNode declarations) {
-            try {
-                if (match(Token.Type.Scan)) {
-                    if (match(Token.Type.Colon)) {
-                        List<String> variableNames = new ArrayList<>();
-                        if(match(Token.Type.Identifier)) {
-                            variableNames.add(tokens.get(currentTokenIndex-1).getText());
-                            while(match(Token.Type.Comma)) {
-                                variableNames.add(tokens.get(currentTokenIndex).getText());
-                            }
-                        }
-                        List<SingleVariableDeclaration> declarationStatements = declarations.getVariableDeclarations();
-                        if(declarationStatements.isEmpty() && !variableNames.isEmpty()) {
-                            throw new VariableDeclarationException("ERROR: Variables '" + variableNames + "' not declared.");
-                        } else {
-                            for(String varName : variableNames) {
-                                if(declarations.getVariableDeclarations().stream()
-                                        .flatMap(declaration -> declaration.getVariableNames().stream())
-                                        .noneMatch(variableNode -> variableNode.getVariableName().equals(varName))) {
-                                    throw new VariableDeclarationException("ERROR: Variable '" + varName + "' not declared.");
-                                }
-                            }
-                        }
+    /************************************************************************
+     * REUSABLE METHODS
+     ************************************************************************/
 
-                        statementCount++;
-                        return new ScannerNode(variableNames, declarations);
-                    } else {
-                        throw new SyntaxErrorException("ERROR: Expected colon (:) after SCAN keyword.");
-                    }
+
+        // Method to match token type. If the current token type matches the expected token type, increment the current token index.
+        private boolean match(Token.Type expectedType) {
+            if (currentTokenIndex < tokens.size() && tokens.get(currentTokenIndex).getType() == expectedType) {
+                if(currentTokenIndex + 1 == tokens.size() && tokens.get(currentTokenIndex).getType() != Token.Type.EndContainer) {
+                    System.err.println("ERROR: Missing END CODE container.");
+                    System.exit(1);
                 }
-            } catch (SyntaxErrorException | VariableDeclarationException i ) {
-                errorCount++;
-                System.err.println(i.getMessage());
-                System.exit(1);
+                currentTokenIndex++;
+                return true;
             }
-            return null;
+            return false;
         }
 
+
+
+        // Reserved Words
         public static final Set<String> RESERVED_WORDS = new HashSet<>(Arrays.asList(
                 "BEGIN", "CODE", "END", "INT", "CHAR", "BOOL", "FLOAT", "DISPLAY",
-                "THEN", "ELSE", "IF", "WHILE", "AND", "OR", "NOT", "TRUE", "FALSE", "SCAN"
+                "THEN", "ELSE", "IF", "WHILE", "AND", "OR", "NOT", "SCAN", "BREAK"
         ));
 
-
+        // Method to check if a token is a reserved word
         private boolean isReservedWord(String token) {
             return RESERVED_WORDS.contains(token);
         }
 
-        // Method to check if a variable name is a reserved word
+        // Method to check if a variable name is a reserved word.
         private boolean isReservedVariable(String variableName) {
             return isReservedWord(variableName);
         }
 
 
+
+
+        // getter for error count, used in App.java to check if there are errors in the code
         public int getErrorCount() {
             return errorCount;
         }
 
+        // getter for statement count, used in App.java to check if there are more than one statement in a single line
+        public int getStatementCount() {
+            return statementCount;
+        }
 
 
 
-        // VariableDeclarations -> VariableDeclaration VariableDeclarations | ε
-        private ASTNode variableDeclarations() {
-            List<SingleVariableDeclaration> variables = new ArrayList<>();
-
-            while (true) {
-                SingleVariableDeclaration variable = (SingleVariableDeclaration) variableDeclaration();
-                if (variable != null) {
-                    statementCount++;
-                    variables.add(variable);
-                } else {
-                    break;
-                }
-            }
-            return new VariableDeclarationsNode(variables);
+        // Method to check if an expression is valid. Used in variable declaration and assignment
+        private boolean isValidExpression() {
+            return ((tokens.get(currentTokenIndex + 1).getType() == Token.Type.Plus ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.Minus ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.Times ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.Divide ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.Modulo ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.Less ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.LessEqual ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.Greater ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.GreaterEqual ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.Equals ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.NotEqual ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.And ||
+                    tokens.get(currentTokenIndex + 1).getType() == Token.Type.Or) &&
+                    (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.Identifier))) ||
+                    (match(Token.Type.Parentheses) && tokens.get(currentTokenIndex - 1).getText().equals("(")) ||
+                    match(Token.Type.Not);
         }
 
 
 
 
-        // VariableDeclaration -> DataType VariableList
-        private ASTNode variableDeclaration() {
-            String dataType = tokens.get(currentTokenIndex).getText();
-            ASTNode variableDeclaration = null;
-            try {
-                if (!dataType.isEmpty() && DataType()) {
-                    List<VariableNode> variableNodes = variableList();
-                    if(variableNodes.isEmpty()) {
-                        throw new VariableDeclarationException("ERROR: Found Data Type token but variable list is empty.");
-                    }
-                    variableDeclaration = new SingleVariableDeclaration(dataType, variableNodes);
-                }
-            } catch (VariableDeclarationException v) {
-                errorCount++;
-                System.err.println(v.getMessage());
-                System.exit(1);
-            }
-            return variableDeclaration;
-        }
-
-
-        // VariableList -> VariableName VariableList'
-        private List<VariableNode> variableList() throws VariableDeclarationException {
-            List<VariableNode> variableNodes = new ArrayList<>();
-            List<String> dominoInitializedVariables = new ArrayList<>();
-            String variableName;
-
-            while((variableName = variableName()) != null) {
-                dominoInitializedVariables.add(variableName);
-                Object initialValue = assignment();
-                if(initialValue != null) {
-                    while (initialValue.equals("continue")) {
-                        variableName = tokens.get(currentTokenIndex - 1).getText();
-                        dominoInitializedVariables.add(variableName);
-                        initialValue = assignment();
-                    }
-
-                    for (String domino : dominoInitializedVariables) {
-                        variableNodes.add(new VariableNode(domino, initialValue));
-                    }
-
-                    dominoInitializedVariables.clear();
-                } else {
-                    variableNodes.add(new VariableNode(variableName, null));
-                }
-
-                if (!match(Token.Type.Comma)) {
-                    break;
-                }
-
-            }
-            return variableNodes;
-        }
-
-        // DataType -> INT | CHAR | BOOL | FLOAT
+        // Method to check if a token is a data type.
         private boolean DataType() {
             return match(Token.Type.Int) || match(Token.Type.Char) || match(Token.Type.Bool) || match(Token.Type.Float);
         }
 
-        // VariableName -> Identifier
+        // Method to check if a token is a valid variable name.
         private String variableName() throws VariableDeclarationException {
             String variableName;
             if (match(Token.Type.Identifier)) {
@@ -228,22 +149,122 @@
         }
 
 
-        // Assignment -> '=' Expression
-        private Object assignment() {
-            if (match(Token.Type.Assign)) {
-                try {
-                    Object assignedValue = value();
 
-                    if(assignedValue != null) {
-                        return assignedValue;
+
+        // Method to handle expressions in the code. It checks if the expression is valid and returns the expression node.
+        private ASTNode expressionHandler() throws SyntaxErrorException, VariableInitializationException {
+            ASTNode exprNode = expr();
+            if (exprNode != null) {
+                return exprNode;
+            } else {
+                throw new SyntaxErrorException("ERROR: Invalid parsing of expression. Null value found.");
+            }
+        }
+
+
+
+        // method to check if variable used is already declared.
+        private void checkDeclaration(VariableDeclarationsNode declarations, String variableName) throws VariableDeclarationException {
+            if(declarations.getVariableDeclarations().stream()
+                    .flatMap(declaration -> declaration.getVariableNames().stream())
+                    .noneMatch(variableNode -> variableNode.getVariableName().equals(variableName))) {
+                throw new VariableDeclarationException("ERROR: Variable '" + variableName + "' not declared.");
+            }
+        }
+
+    /* *********************************** END ************************************ */
+
+
+
+
+    /************************************************************************
+     * VARIABLE DECLARATIONS
+     ************************************************************************/
+
+        // VariableDeclarations -> VariableDeclaration VariableDeclarations | ε
+        private ASTNode variableDeclarations() {
+            List<SingleVariableDeclaration> variables = new ArrayList<>();
+            try {
+                while (true) {
+                    SingleVariableDeclaration variable = (SingleVariableDeclaration) variableDeclaration();
+                    if (variable != null) {
+                        statementCount++;
+                        variables.add(variable);
+                    } else {
+                        break;
+                    }
+                }
+            } catch (VariableDeclarationException | VariableInitializationException | SyntaxErrorException v) {
+                errorCount++;
+                System.err.println(v.getMessage());
+                System.exit(1);
+            }
+            return new VariableDeclarationsNode(variables);
+        }
+
+
+
+        // VariableDeclaration -> DataType VariableList
+        private ASTNode variableDeclaration() throws VariableDeclarationException, VariableInitializationException, SyntaxErrorException {
+            String dataType = tokens.get(currentTokenIndex).getText();
+            ASTNode variableDeclaration = null;
+            if (!dataType.isEmpty() && DataType()) {
+                List<VariableNode> variableNodes = variableList();
+                if(variableNodes.isEmpty()) {
+                    throw new VariableDeclarationException("ERROR: Found Data Type token but variable list is empty.");
+                }
+                variableDeclaration = new SingleVariableDeclaration(dataType, variableNodes);
+            }
+            return variableDeclaration;
+        }
+
+
+
+        // VariableList -> VariableName VariableList'
+        private List<VariableNode> variableList() throws VariableDeclarationException, VariableInitializationException, SyntaxErrorException {
+            List<VariableNode> variableNodes = new ArrayList<>();
+            String variableName;
+
+            while((variableName = variableName()) != null) {
+                List<String> dominoInitializedVariables = new ArrayList<>();
+                dominoInitializedVariables.add(variableName);
+                Object initialValue = assignment();
+                if(initialValue != null) {
+                    while (true) {
+                        assert initialValue != null;
+                        if (!initialValue.equals("continue")) break;
+                        variableName = tokens.get(currentTokenIndex - 1).getText();
+                        dominoInitializedVariables.add(variableName);
+                        initialValue = assignment();
                     }
 
-                    throw new VariableInitializationException("ERROR: Assignment operator found but " +
-                            "value token is missing or is an invalid value type. Please check again.");
-                } catch (VariableInitializationException | SyntaxErrorException v) {
-                    System.err.println(v.getMessage());
-                    System.exit(1);
+                    for (String domino : dominoInitializedVariables) {
+                        variableNodes.add(new VariableNode(domino, initialValue));
+                    }
+                } else {
+                    variableNodes.add(new VariableNode(variableName, null));
                 }
+
+                if (!match(Token.Type.Comma)) {
+                    break;
+                }
+
+            }
+            return variableNodes;
+        }
+
+
+
+        // Assignment -> '=' Expression
+        private Object assignment() throws VariableInitializationException, SyntaxErrorException {
+            if (match(Token.Type.Assign)) {
+                Object assignedValue = value();
+
+                if(assignedValue != null) {
+                    return assignedValue;
+                }
+                throw new VariableInitializationException("ERROR: Assignment operator found but " +
+                        "value token is missing or is an invalid value type. Please check again.");
             }
             return null;
         }
@@ -286,69 +307,61 @@
             }
             return null;
         }
-
-        private boolean isValidExpression() {
-            return ((tokens.get(currentTokenIndex + 1).getType() == Token.Type.Plus ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.Minus ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.Times ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.Divide ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.Modulo ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.Less ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.LessEqual ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.Greater ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.GreaterEqual ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.Equals ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.NotEqual ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.And ||
-                     tokens.get(currentTokenIndex + 1).getType() == Token.Type.Or) &&
-                     (match(Token.Type.Num) || match(Token.Type.NumFloat) || match(Token.Type.Identifier))) ||
-                     (match(Token.Type.Parentheses) && tokens.get(currentTokenIndex - 1).getText().equals("(")) ||
-                    match(Token.Type.Not);
-        }
+        /* *********************************** END ************************************ */
 
 
-    private ASTNode executableCode(VariableDeclarationsNode variableDeclarationsNode) {
-        try {
-            List<ASTNode> statements = new ArrayList<>();
-            while(true) {
-                if (match(Token.Type.Print)) {
-                    DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
-                    statements.add(displayNode);
-                } else if (match(Token.Type.Identifier)) {
-                    if (match(Token.Type.Assign)) {
-                        currentTokenIndex -= 2;
-                        statements.add(reinitializeVariable(variableDeclarationsNode));
+
+
+    /************************************************************************
+     * EXECUTABLE CODE
+     ************************************************************************/
+
+
+        // ExecutableCode -> Statement ExecutableCode | ε
+        private ASTNode executableCode(VariableDeclarationsNode variableDeclarationsNode) {
+            try {
+                List<ASTNode> statements = new ArrayList<>();
+                while(true) {
+                    if (match(Token.Type.Print)) {
+                        DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
+                        statements.add(displayNode);
+                    } else if (match(Token.Type.Identifier)) {
+                        if (match(Token.Type.Assign)) {
+                            currentTokenIndex -= 2;
+                            statements.add(reinitializeVariable(variableDeclarationsNode));
+                        }
+                    } else if (match(Token.Type.Scan)) {
+                        currentTokenIndex--;
+                        statements.add(scanFunction(variableDeclarationsNode));
+                    } else if (match(Token.Type.If)) {
+                        currentTokenIndex--;
+                        statements.add(conditionalStatements(variableDeclarationsNode));
+                    } else if(match(Token.Type.While)){
+                        currentTokenIndex--;
+                        statements.add(parseIterative(variableDeclarationsNode));
+                    } else {
+                        break;
                     }
-                } else if (match(Token.Type.Scan)) {
-                    currentTokenIndex--;
-                    statements.add(scanFunction(variableDeclarationsNode));
-                } else if (match(Token.Type.If)) {
-                    currentTokenIndex--;
-                    statements.add(conditionalStatements(variableDeclarationsNode));
-                } else {
-                    break;
                 }
-            }
 
-            if(DataType()) {
-                currentTokenIndex--;
-                throw new SyntaxErrorException("ERROR: Variable declaration found after executable code.");
-            }
+                if(DataType()) {
+                    currentTokenIndex--;
+                    throw new SyntaxErrorException("ERROR: Variable declaration found after executable code.");
+                }
 
-            return new ExecutableCodeNode(statements);
-        } catch (SyntaxErrorException | DisplayException | VariableInitializationException v) {
-            errorCount++;
-            System.err.println(v.getMessage());
-            System.exit(1);
+                return new ExecutableCodeNode(statements);
+            } catch (SyntaxErrorException | DisplayException | VariableDeclarationException | VariableInitializationException v) {
+                errorCount++;
+                System.err.println(v.getMessage());
+                System.exit(1);
+            }
+            return null;
         }
-        return null;
-    }
 
 
 
-
-    private ASTNode reinitializeVariable(VariableDeclarationsNode declarationStatements) {
-        try {
+        // Reinitialize Variable Executable
+        private ASTNode reinitializeVariable(VariableDeclarationsNode declarationStatements) throws VariableInitializationException, SyntaxErrorException, VariableDeclarationException {
             List<String> dominoInitializedVariables = new ArrayList<>();
             Object initialValue = null;
             String variableName;
@@ -356,7 +369,9 @@
                 dominoInitializedVariables.add(variableName);
                 initialValue = assignment();
                 if(initialValue != null) {
-                    while (initialValue.equals("continue")) {
+                    while (true) {
+                        assert initialValue != null;
+                        if (!initialValue.equals("continue")) break;
                         variableName = tokens.get(currentTokenIndex - 1).getText();
                         dominoInitializedVariables.add(variableName);
                         initialValue = assignment();
@@ -365,95 +380,228 @@
                     throw new SyntaxErrorException("ERROR: Invalid variable reinitialization format. Expected assignment operator.");
                 }
             }
+
             for(String domino : dominoInitializedVariables) {
-                boolean variableDeclared = declarationStatements.getVariableDeclarations().stream()
-                        .flatMap(declaration -> declaration.getVariableNames().stream())
-                        .anyMatch(variableNode -> variableNode.getVariableName().equals(domino));
-
-                if (!variableDeclared) {
-                    throw new VariableInitializationException("ERROR: Variable '" + domino + "' not declared.");
-                }
-
+                checkDeclaration(declarationStatements, domino);
             }
             statementCount++;
-            return new VariableReinitializedNode(dominoInitializedVariables, new LiteralNode(initialValue));
-        } catch (Exception v) {
-            errorCount++;
-            System.err.println(v.getMessage());
-            System.exit(1);
+            return new VariableReinitializedNode(dominoInitializedVariables, new LiteralNode(initialValue), declarationStatements);
+
         }
-        return null;
-    }
 
 
-    private ASTNode expressionHandler() throws SyntaxErrorException, VariableInitializationException {
-        ASTNode exprNode = expr();
-        if (exprNode != null) {
-            return exprNode;
-        } else {
-            throw new SyntaxErrorException("ERROR: Invalid parsing of expression. Null value found.");
-        }
-    }
+
+        // Scan Executable
+            private ASTNode scanFunction(VariableDeclarationsNode declarations) throws VariableDeclarationException, SyntaxErrorException {
+                if (match(Token.Type.Scan)) {
+                    if (match(Token.Type.Colon)) {
+                        List<String> variableNames = new ArrayList<>();
+                        if(match(Token.Type.Identifier)) {
+                            variableNames.add(tokens.get(currentTokenIndex-1).getText());
+                            while(match(Token.Type.Comma)) {
+                                variableNames.add(tokens.get(currentTokenIndex).getText());
+                            }
+                        }
+                        List<SingleVariableDeclaration> declarationStatements = declarations.getVariableDeclarations();
+                        if(declarationStatements.isEmpty() && !variableNames.isEmpty()) {
+                            throw new VariableDeclarationException("ERROR: Variables '" + variableNames + "' not declared.");
+                        } else {
+                            for(String varName : variableNames) {
+                                checkDeclaration(declarations, varName);
+                            }
+                        }
+
+                        statementCount++;
+                        return new ScannerNode(variableNames, declarations);
+                    } else {
+                        throw new SyntaxErrorException("ERROR: Expected colon (:) after SCAN keyword.");
+                    }
+                }
+                return null;
+            }
     
 
-    private ASTNode displayHandler(VariableDeclarationsNode variableDeclarationsNode) throws DisplayException, SyntaxErrorException, VariableInitializationException {
-        List<ASTNode> expressions = new ArrayList<>();
-        if(match(Token.Type.Colon)) {
-            while (true) {
-                if(isValidExpression()) {
-                    currentTokenIndex--;
-                    expressions.add(expressionHandler());
-                } else if(match(Token.Type.Negation)) {
-                    if (isValidExpression() ) {
-                        currentTokenIndex-=2;
+
+        // Display Executable
+        private ASTNode displayHandler(VariableDeclarationsNode variableDeclarationsNode) throws DisplayException, SyntaxErrorException, VariableInitializationException, VariableDeclarationException {
+            List<ASTNode> expressions = new ArrayList<>();
+            if(match(Token.Type.Colon)) {
+                while (true) {
+                    if(isValidExpression()) {
+                        currentTokenIndex--;
                         expressions.add(expressionHandler());
+                    } else if(match(Token.Type.Negation)) {
+                        if (isValidExpression() ) {
+                            currentTokenIndex-=2;
+                            expressions.add(expressionHandler());
+                        } else if(match(Token.Type.Identifier)) {
+                            expressions.add(new VariableNode(tokens.get(currentTokenIndex-1).getText(), -1));
+                        } else if (match(Token.Type.Num)) {
+                            expressions.add(new LiteralNode(-(Integer.parseInt(tokens.get(currentTokenIndex-1).getText()))));
+                        } else if (match(Token.Type.NumFloat)) {
+                            expressions.add(new LiteralNode(-(Float.parseFloat(tokens.get(currentTokenIndex-1).getText()))));
+                        }
                     } else if(match(Token.Type.Identifier)) {
-                        expressions.add(new VariableNode(tokens.get(currentTokenIndex-1).getText(), -1));
-                    } else if (match(Token.Type.Num)) {
-                        expressions.add(new LiteralNode(-(Integer.parseInt(tokens.get(currentTokenIndex-1).getText()))));
-                    } else if (match(Token.Type.NumFloat)) {
-                        expressions.add(new LiteralNode(-(Float.parseFloat(tokens.get(currentTokenIndex-1).getText()))));
-                    }
-                } else if(match(Token.Type.Identifier)) {
-                    expressions.add(new VariableNode(tokens.get(currentTokenIndex-1).getText(), null));
-                } else if(match(Token.Type.Num) || match(Token.Type.NumFloat) ||
-                    match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral) ||
-                    match(Token.Type.StringLiteral) || match(Token.Type.NewLine) ||
-                    match(Token.Type.Escape) ){
+                        String variableName = tokens.get(currentTokenIndex-1).getText();
+                        checkDeclaration(variableDeclarationsNode, variableName);
+                        expressions.add(new VariableNode(variableName, null));
+                    } else if(match(Token.Type.Num) || match(Token.Type.NumFloat) ||
+                        match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral) ||
+                        match(Token.Type.StringLiteral) || match(Token.Type.NewLine) ||
+                        match(Token.Type.Escape) ){
 
-                    LiteralNode literalNode = new LiteralNode(tokens.get(currentTokenIndex - 1).getText());
-                    if(literalNode.getValue().equals("$")) {
-                        literalNode = new LiteralNode("\n");
-                    }
-                    expressions.add(literalNode);
+                        LiteralNode literalNode = new LiteralNode(tokens.get(currentTokenIndex - 1).getText());
+                        if(literalNode.getValue().equals("$")) {
+                            literalNode = new LiteralNode("\n");
+                        }
+                        expressions.add(literalNode);
 
-                } else {
-                    throw new DisplayException("ERROR: Invalid display statement format near '" + tokens.get(currentTokenIndex).getText() + "' token");
+                    } else {
+                        throw new DisplayException("ERROR: Invalid display statement format near '" + tokens.get(currentTokenIndex).getText() + "' token");
+                    }
+
+                    if (!match(Token.Type.Concat)) {
+                        if(tokens.get(currentTokenIndex).getType() == Token.Type.NewLine ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.Escape ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.Identifier ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.StringLiteral ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.CharLiteral ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.Num ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.NumFloat ||
+                                tokens.get(currentTokenIndex).getType() == Token.Type.BooleanLiteral) {
+                                if(match(Token.Type.Identifier) && match(Token.Type.Assign)) {
+                                    currentTokenIndex -=2;
+                                    break;
+                                }
+                                throw new DisplayException("ERROR: Expression found but concatenation token is missing.");
+                        }
+                        break;
+                    }
                 }
+            } else {
+                throw new DisplayException("ERROR: Colon (:) token missing after DISPLAY keyword.");
+            }
+            statementCount++;
+            return new DisplayNode(expressions);
+        }
 
-                if (match(Token.Type.Concat)) {
-                    continue;
-                } else {
-                    if(tokens.get(currentTokenIndex).getType() == Token.Type.NewLine ||
-                            tokens.get(currentTokenIndex).getType() == Token.Type.Escape ||
-                            tokens.get(currentTokenIndex).getType() == Token.Type.Identifier ||
-                            tokens.get(currentTokenIndex).getType() == Token.Type.StringLiteral ||
-                            tokens.get(currentTokenIndex).getType() == Token.Type.CharLiteral ||
-                            tokens.get(currentTokenIndex).getType() == Token.Type.Num ||
-                            tokens.get(currentTokenIndex).getType() == Token.Type.NumFloat ||
-                            tokens.get(currentTokenIndex).getType() == Token.Type.BooleanLiteral) {
-                            throw new DisplayException("ERROR: Expression found but concatenation token is missing.");
+
+
+        // Conditional Statements Executable
+        private ASTNode conditionalStatements(VariableDeclarationsNode variableDeclarationsNode) throws SyntaxErrorException, VariableInitializationException, DisplayException, VariableDeclarationException {
+            List<ASTNode> ifStatements = new ArrayList<>();
+            List<ExecutableCodeNode> elseIfBlocks = new ArrayList<>();
+            List<ASTNode> elseStatements = new ArrayList<>();
+            List<ASTNode> conditions = new ArrayList<>();
+            if(match(Token.Type.If)) {
+                conditions.add(parseCondition());
+                beginIfBlock(ifStatements, variableDeclarationsNode);
+            }
+            while(match(Token.Type.IfElse)) {
+                List<ASTNode> elseIfStatements = new ArrayList<>();
+                conditions.add(parseCondition());
+                beginIfBlock(elseIfStatements, variableDeclarationsNode);
+                elseIfBlocks.add(new ExecutableCodeNode(elseIfStatements));
+            }
+            if(match(Token.Type.Else)) {
+                beginIfBlock(elseStatements, variableDeclarationsNode);
+            }
+            return new ConditionalNode(conditions,new ExecutableCodeNode(ifStatements), elseIfBlocks, new ExecutableCodeNode(elseStatements));
+        }
+
+        private ASTNode parseCondition() throws SyntaxErrorException, VariableInitializationException {
+            ASTNode condition;
+            if(match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(")) {
+                condition = expressionHandler();
+                if (!match(Token.Type.Parentheses) || !tokens.get(currentTokenIndex - 1).getText().equals(")")) {
+                    throw new SyntaxErrorException("ERROR: Missing closing parenthesis for structural condition statement.");
+                }
+            } else {
+                throw new SyntaxErrorException("ERROR: Missing opening parenthesis for structural condition statement.");
+            }
+            return condition;
+        }
+
+        private void beginIfBlock(List<ASTNode> ifStatements, VariableDeclarationsNode variableDeclarationsNode) throws SyntaxErrorException, VariableInitializationException, DisplayException, VariableDeclarationException {
+            if (match(Token.Type.BeginIf)) {
+                while (!match(Token.Type.EndIf)) {
+                    if (match(Token.Type.Print)) {
+                        DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
+                        ifStatements.add(displayNode);
+                    } else if (match(Token.Type.Identifier)) {
+                        if (match(Token.Type.Assign)) {
+                            currentTokenIndex -= 2;
+                            ifStatements.add(reinitializeVariable(variableDeclarationsNode));
+                        }
+                    } else if (match(Token.Type.Scan)) {
+                        currentTokenIndex--;
+                        ifStatements.add(scanFunction(variableDeclarationsNode));
+                    } else if(match(Token.Type.If)) {
+                        currentTokenIndex--;
+                        ifStatements.add(conditionalStatements(variableDeclarationsNode));
+                    } else if (match(Token.Type.While)) {
+                        currentTokenIndex--;
+                        ifStatements.add(parseIterative(variableDeclarationsNode));
+                    } else if (match(Token.Type.Break)) {
+                        List<Token> subTokens = tokens.subList(0, currentTokenIndex+1);
+                        if(subTokens.stream().noneMatch(token -> token.getType() == Token.Type.While)) {
+                            throw new SyntaxErrorException("ERROR: BREAK statement found outside of WHILE block.");
+                        }
+                        ifStatements.add(new BreakNode());
+                    } else {
+                        throw new SyntaxErrorException("ERROR: Invalid statement inside IF block.");
                     }
-                    break;
+                }
+            } else {
+                throw new SyntaxErrorException("ERROR: Missing BEGIN IF token after condition statement.");
+            }
+        }
+
+
+
+        // Loop Statements
+        private ASTNode parseIterative(VariableDeclarationsNode variableDeclarationsNode) throws SyntaxErrorException, VariableInitializationException, DisplayException, VariableDeclarationException {
+            ASTNode condition = null;
+            List<ASTNode> statements = new ArrayList<>();
+            if(match(Token.Type.While)) {
+                condition = parseCondition();
+                if(match(Token.Type.BeginWhile)) {
+                    while (!match(Token.Type.EndWhile)) {
+                        if (match(Token.Type.Print)) {
+                            DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
+                            statements.add(displayNode);
+                        } else if (match(Token.Type.Identifier)) {
+                            if (match(Token.Type.Assign)) {
+                                currentTokenIndex -= 2;
+                                statements.add(reinitializeVariable(variableDeclarationsNode));
+                            }
+                        } else if (match(Token.Type.Scan)) {
+                            currentTokenIndex--;
+                            statements.add(scanFunction(variableDeclarationsNode));
+                        } else if(match(Token.Type.If)) {
+                            currentTokenIndex--;
+                            statements.add(conditionalStatements(variableDeclarationsNode));
+                        } else if (match(Token.Type.While)) {
+                            currentTokenIndex--;
+                            statements.add(parseIterative(variableDeclarationsNode));
+                        } else if (match(Token.Type.Break)) {
+                            statements.add(new BreakNode());
+                        } else {
+                            throw new SyntaxErrorException("ERROR: Invalid statement inside WHILE block.");
+                        }
+                    }
                 }
             }
-        } else {
-            throw new DisplayException("ERROR: Colon (:) token missing after DISPLAY keyword.");
+            return new IterativeNode(condition, statements);
         }
-        statementCount++;
-        return new DisplayNode(expressions);
-    }
 
+    /* *********************************** END ************************************ */
+
+
+
+    /************************************************************************
+     * EXPRESSION PARSING
+     ************************************************************************/
 
     private ASTNode expr() throws SyntaxErrorException, VariableInitializationException {
         ASTNode logicalAnd = logicalAnd();
@@ -553,6 +701,8 @@
             } else if (match(Token.Type.NumFloat)) {
                 return new LiteralNode(-(Float.parseFloat(tokens.get(currentTokenIndex - 1).getText())));
             }
+            ASTNode expression = parenthesisExpression();
+            if (expression != null) return expression;
             throw new SyntaxErrorException("ERROR: Negation token found but number token is missing.");
         } else if (match(Token.Type.Not)) {
             Token.Type type = tokens.get(currentTokenIndex - 1).getType();
@@ -568,76 +718,25 @@
             return new VariableNode(tokens.get(currentTokenIndex-1).getText(), null);
         } else if (match(Token.Type.NumFloat)) {
             return new LiteralNode(Float.parseFloat(tokens.get(currentTokenIndex - 1).getText()));
+        } else if (match(Token.Type.CharLiteral)) {
+            return new LiteralNode(tokens.get(currentTokenIndex-1).getText().charAt(0));
         } else if(match(Token.Type.BooleanLiteral)) {
             return new LiteralNode(tokens.get(currentTokenIndex - 1).getText());
-        } else if (match(Token.Type.Parentheses) && tokens.get(currentTokenIndex - 1).getText().equals("(")) {
-            ASTNode expression = expressionHandler();
-            if (tokens.get(currentTokenIndex).getText().equals(")") && match(Token.Type.Parentheses)) {
-                return expression;
-            }
-            throw new SyntaxErrorException("ERROR: Invalid expression format. Missing closing parenthesis.");
+        } else {
+            return parenthesisExpression();
         }
-        return null;
     }
 
-
-        private ASTNode conditionalStatements(VariableDeclarationsNode variableDeclarationsNode) throws SyntaxErrorException, VariableInitializationException, DisplayException {
-            List<ASTNode> ifStatements = new ArrayList<>();
-            List<ExecutableCodeNode> elseIfBlocks = new ArrayList<>();
-            List<ASTNode> elseStatements = new ArrayList<>();
-            List<ASTNode> conditions = new ArrayList<>();
-            if(match(Token.Type.If)) {
-                conditions.add(parseCondition());
-                beginIfBlock(ifStatements, variableDeclarationsNode);
-            }
-            while(match(Token.Type.IfElse)) {
-                List<ASTNode> elseIfStatements = new ArrayList<>();
-                conditions.add(parseCondition());
-                beginIfBlock(elseIfStatements, variableDeclarationsNode);
-                elseIfBlocks.add(new ExecutableCodeNode(elseIfStatements));
-            }
-            if(match(Token.Type.Else)) {
-                beginIfBlock(elseStatements, variableDeclarationsNode);
-            }
-            return new ConditionalNode(conditions,new ExecutableCodeNode(ifStatements), elseIfBlocks, new ExecutableCodeNode(elseStatements));
-        }
-
-        private ASTNode parseCondition() throws SyntaxErrorException, VariableInitializationException {
-            ASTNode condition = null;
-            if(match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(")) {
-                condition = expressionHandler();
-                if (!match(Token.Type.Parentheses) || !tokens.get(currentTokenIndex - 1).getText().equals(")")) {
-                    throw new SyntaxErrorException("ERROR: Missing closing parenthesis for IF condition.");
+        private ASTNode parenthesisExpression() throws SyntaxErrorException, VariableInitializationException {
+            if (match(Token.Type.Parentheses) && tokens.get(currentTokenIndex - 1).getText().equals("(")) {
+                ASTNode expression = expressionHandler();
+                if (tokens.get(currentTokenIndex).getText().equals(")") && match(Token.Type.Parentheses)) {
+                    return expression;
                 }
-            } else {
-                throw new SyntaxErrorException("ERROR: Missing opening parenthesis for IF condition.");
+                throw new SyntaxErrorException("ERROR: Invalid expression format. Missing closing parenthesis.");
             }
-            return condition;
+            return null;
         }
 
-        private void beginIfBlock(List<ASTNode> ifStatements, VariableDeclarationsNode variableDeclarationsNode) throws SyntaxErrorException, VariableInitializationException, DisplayException {
-            if (match(Token.Type.BeginIf)) {
-                while (!match(Token.Type.EndIf)) {
-                    if (match(Token.Type.Print)) {
-                        DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
-                        ifStatements.add(displayNode);
-                    } else if (match(Token.Type.Identifier)) {
-                        if (match(Token.Type.Assign)) {
-                            currentTokenIndex -= 2;
-                            ifStatements.add(reinitializeVariable(variableDeclarationsNode));
-                        }
-                    } else if (match(Token.Type.Scan)) {
-                        currentTokenIndex--;
-                        ifStatements.add(scanFunction(variableDeclarationsNode));
-                    } else if(match(Token.Type.If)) {
-                        currentTokenIndex--;
-                        ifStatements.add(conditionalStatements(variableDeclarationsNode));
-                    } else {
-                        throw new SyntaxErrorException("ERROR: Invalid statement inside IF block.");
-                    }
-                }
-            } else {
-                throw new SyntaxErrorException("ERROR: Missing BEGIN IF after IF condition.");
-            }
-        }
-}
+
+    }
