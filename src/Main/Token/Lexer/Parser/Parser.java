@@ -190,6 +190,11 @@
                 while (true) {
                     SingleVariableDeclaration variable = (SingleVariableDeclaration) variableDeclaration();
                     if (variable != null) {
+                        if(variables.stream().anyMatch(declaration -> declaration.getVariableNames().stream()
+                                .anyMatch(variableNode -> variable.getVariableNames().stream()
+                                        .anyMatch(variableNode1 -> variableNode1.getVariableName().equals(variableNode.getVariableName()))))) {
+                            throw new VariableDeclarationException("ERROR: Duplicate variable declaration found.");
+                        }
                         statementCount++;
                         variables.add(variable);
                     } else {
