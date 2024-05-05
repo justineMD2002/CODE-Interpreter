@@ -530,7 +530,7 @@
         private void beginIfBlock(List<ASTNode> ifStatements, VariableDeclarationsNode variableDeclarationsNode) throws SyntaxErrorException, VariableInitializationException, DisplayException, VariableDeclarationException {
             if (match(Token.Type.BeginIf)) {
                 while (!match(Token.Type.EndIf)) {
-                    if (match(Token.Type.Print)) {
+                     if (match(Token.Type.Print)) {
                         DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
                         ifStatements.add(displayNode);
                     } else if (match(Token.Type.Identifier)) {
@@ -557,7 +557,9 @@
                         }
                         ifStatements.add(new BreakNode());
                     } else {
-                        throw new SyntaxErrorException("ERROR: Invalid statement inside IF block.");
+                        throw new SyntaxErrorException("ERROR: Expected PRINT, SCAN, IF, WHILE, FOR, or BREAK statement inside IF block " +
+                                "but found " + tokens.get(currentTokenIndex).getType() + " token.\n" +
+                                "Either it is not an executable statement OR EndIf token is missing.");
                     }
                 }
             } else {
@@ -642,7 +644,9 @@
             } else if (match(Token.Type.Break)) {
                 statements.add(new BreakNode());
             } else {
-                throw new SyntaxErrorException("ERROR: Invalid statement inside WHILE block.");
+                throw new SyntaxErrorException("ERROR: Expected PRINT, SCAN, IF, WHILE, FOR, or BREAK statement inside loop block " +
+                        "but found " + tokens.get(currentTokenIndex).getType() + " token.\n" +
+                        "Either it is not an executable statement OR EndWhile/EndFor token is missing.");
             }
         }
 
