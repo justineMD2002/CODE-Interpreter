@@ -457,11 +457,10 @@
                         expressions.add(new VariableNode(variableName, null));
                     } else if(match(Token.Type.Num) || match(Token.Type.NumFloat) ||
                         match(Token.Type.CharLiteral) || match(Token.Type.BooleanLiteral) ||
-                        match(Token.Type.StringLiteral) || match(Token.Type.NewLine) ||
-                        match(Token.Type.Escape) ){
+                        match(Token.Type.StringLiteral) || match(Token.Type.NewLine) || match(Token.Type.Escape)){
 
                         LiteralNode literalNode = new LiteralNode(tokens.get(currentTokenIndex - 1).getText());
-                        if(literalNode.getValue().equals("$")) {
+                        if(literalNode.getValue().equals("$") && tokens.get(currentTokenIndex-1).getType() == Token.Type.NewLine){
                             literalNode = new LiteralNode("\n");
                         }
                         expressions.add(literalNode);

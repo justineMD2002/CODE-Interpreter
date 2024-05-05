@@ -1,51 +1,11 @@
+# this is a sample program in CODE
 BEGIN CODE
-INT a=100, b=200, c=300, x, y, z, i, j=20
-DISPLAY: [$]
-DISPLAY: "Enter x: "
-SCAN: x
-FOR (y = 0, y < x, y = y+1)
-BEGIN FOR
-	FOR(z = 0, z < x*2, z = z+1)
-	BEGIN FOR
-        IF(y == 0)
-        BEGIN IF
-            DISPLAY: "*"
-        END IF
-        ELSE
-        BEGIN IF
-            IF(z >= x-y AND z < x*2-(x-y))
-            BEGIN IF
-                DISPLAY: " "
-            END IF
-            ELSE
-            BEGIN IF
-                DISPLAY: "*"
-            END IF
-        END IF
-	END FOR
-    DISPLAY: $
-END FOR
-
-FOR (y = x-1, y >=0, y = y-1)
-BEGIN FOR
-	FOR(z = 0, z < x*2, z = z+1)
-	BEGIN FOR
-        IF(y == 0)
-        BEGIN IF
-            DISPLAY: "*"
-        END IF
-        ELSE
-        BEGIN IF
-            IF(z >= x-y AND z < x*2-(x-y))
-            BEGIN IF
-                DISPLAY: " "
-            END IF
-            ELSE
-            BEGIN IF
-                DISPLAY: "*"
-            END IF
-        END IF
-	END FOR
-    DISPLAY: $
-END FOR
+    INT x, y, z=5
+    CHAR a_1='n'
+    BOOL t="TRUE"
+    x=y=4
+    a_1='c'
+    # this is a comment
+    DISPLAY: x & t & z & $ & a_1 & [$] & "last" &
+    DISPLAY: "Hello World"
 END CODE
