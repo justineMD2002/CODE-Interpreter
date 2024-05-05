@@ -320,6 +320,9 @@ public class Lexer {
                 } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 5 < input.length() && input.startsWith("WHILE", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.BeginWhile, "BEGIN WHILE", tokenStartPos));
                     currentPos+=6;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 3 < input.length() && input.startsWith("FOR", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.BeginFor, "BEGIN FOR", tokenStartPos));
+                    currentPos+=4;
                 }
                 return;
             case "END":
@@ -332,6 +335,9 @@ public class Lexer {
                 } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 5 < input.length() && input.startsWith("WHILE", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.EndWhile, "END WHILE", tokenStartPos));
                     currentPos+=6;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 3 < input.length() && input.startsWith("FOR", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.EndFor, "END FOR", tokenStartPos));
+                    currentPos+=4;
                 }
                 return;
             case "IF":
@@ -347,6 +353,9 @@ public class Lexer {
                 break;
             case "WHILE":
                 type = Token.Type.While;
+                break;
+            case "FOR":
+                type = Token.Type.For;
                 break;
             default:
                 if (Character.isLetter(identifier.charAt(0)) || identifier.charAt(0) == '_') {

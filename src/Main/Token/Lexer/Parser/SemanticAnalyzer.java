@@ -58,7 +58,7 @@ public class SemanticAnalyzer {
                         }
                         case LiteralNode literalNode -> {
                             AssignmentValidator.validateAssignmentType(dataType, variableNode.getVariableName(), literalNode);
-                            new VariableNode(variableNode.getVariableName(), literalNode.getValue()).evaluate(symbolTable);
+                            new VariableNode(variableNode.getVariableName(), literalNode.getValue()).evaluate(getSymbolTable());
                         }
                         case null, default -> variableNode.evaluate(getSymbolTable());
                     }
@@ -68,7 +68,7 @@ public class SemanticAnalyzer {
             List<ASTNode> executables = executableCodeNode.getStatements();
             for(ASTNode statement : executables) {
                 if(statement instanceof EvaluableNode evaluableNode) {
-                    evaluableNode.evaluate(symbolTable);
+                    evaluableNode.evaluate(getSymbolTable());
                 }
             }
         }

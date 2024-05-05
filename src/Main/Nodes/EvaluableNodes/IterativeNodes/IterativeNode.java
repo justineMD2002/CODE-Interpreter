@@ -1,4 +1,4 @@
-package Main.Nodes.EvaluableNodes;
+package Main.Nodes.EvaluableNodes.IterativeNodes;
 
 import Main.ExceptionHandlers.BreakException;
 import Main.ExceptionHandlers.VariableDeclarationException;
@@ -7,37 +7,36 @@ import Main.Nodes.ASTNodes.ASTNode;
 import Main.Nodes.ASTNodes.BreakNode;
 import Main.Nodes.ASTNodes.EvaluableNode;
 import Main.Nodes.ASTNodes.LiteralNode;
+import Main.Nodes.EvaluableNodes.VariableNode;
 import Main.Nodes.ExpressionNodes.ExpressionNode;
 import Main.Nodes.SymbolTable;
 
 import java.util.List;
 
-public class IterativeNode extends EvaluableNode {
+public abstract class IterativeNode extends EvaluableNode {
     private final ASTNode condition;
-    private final List<ASTNode> whileStatements;
+    private final List<ASTNode> iterativeStatements;
 
-    public IterativeNode(ASTNode condition, List<ASTNode> whileStatements) {
+    public IterativeNode(ASTNode condition, List<ASTNode> iterativeStatements) {
         this.condition = condition;
-        this.whileStatements = whileStatements;
+        this.iterativeStatements = iterativeStatements;
     }
 
     public ASTNode getCondition() {
         return condition;
     }
 
-    public List<ASTNode> getWhileStatements() {
-        return whileStatements;
+    public List<ASTNode> getIterativeStatements() {
+        return iterativeStatements;
     }
 
-    @Override
-    public void evaluate(SymbolTable symbolTable) throws VariableInitializationException, VariableDeclarationException {
-        ASTNode condition = getCondition();
-        boolean conditionResult = updateCondition(condition, symbolTable);
 
+    protected void evaluateLoop(SymbolTable symbolTable, ASTNode condition) throws VariableInitializationException, VariableDeclarationException {
+        boolean conditionResult = updateCondition(condition, symbolTable);
 
         while (conditionResult) {
             try {
-                for (ASTNode statement : getWhileStatements()) {
+                for (ASTNode statement : getIterativeStatements()) {
                     if(statement instanceof EvaluableNode evaluableNode) {
                         evaluableNode.evaluate(symbolTable);
                     } else if(statement instanceof BreakNode) {
@@ -51,7 +50,7 @@ public class IterativeNode extends EvaluableNode {
         }
     }
 
-    private boolean updateCondition(ASTNode condition, SymbolTable symbolTable) throws VariableInitializationException, VariableDeclarationException {
+    protected boolean updateCondition(ASTNode condition, SymbolTable symbolTable) throws VariableInitializationException, VariableDeclarationException {
         if(condition instanceof ExpressionNode expressionNode) {
             LiteralNode result = expressionNode.evaluateExpression(symbolTable);
             return result.getValue().equals("TRUE");

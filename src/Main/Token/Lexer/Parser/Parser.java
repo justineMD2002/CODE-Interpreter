@@ -3,6 +3,8 @@
     import Main.ExceptionHandlers.*;
     import Main.Nodes.ASTNodes.*;
     import Main.Nodes.EvaluableNodes.*;
+    import Main.Nodes.EvaluableNodes.IterativeNodes.ForLoopNode;
+    import Main.Nodes.EvaluableNodes.IterativeNodes.WhileLoopNode;
     import Main.Nodes.ExpressionNodes.ArithmeticExpressionNode;
     import Main.Nodes.ExpressionNodes.ComparisonExpressionNode;
     import Main.Nodes.ExpressionNodes.LogicalExpressionNode;
@@ -339,6 +341,9 @@
                     } else if(match(Token.Type.While)){
                         currentTokenIndex--;
                         statements.add(parseIterative(variableDeclarationsNode));
+                    } else if(match(Token.Type.For)) {
+                        currentTokenIndex--;
+                        statements.add(parseIterative(variableDeclarationsNode));
                     } else {
                         break;
                     }
@@ -542,6 +547,9 @@
                     } else if (match(Token.Type.While)) {
                         currentTokenIndex--;
                         ifStatements.add(parseIterative(variableDeclarationsNode));
+                    } else if(match(Token.Type.For)) {
+                        currentTokenIndex--;
+                        ifStatements.add(parseIterative(variableDeclarationsNode));
                     } else if (match(Token.Type.Break)) {
                         List<Token> subTokens = tokens.subList(0, currentTokenIndex+1);
                         if(subTokens.stream().noneMatch(token -> token.getType() == Token.Type.While)) {
@@ -561,38 +569,81 @@
 
         // Loop Statements
         private ASTNode parseIterative(VariableDeclarationsNode variableDeclarationsNode) throws SyntaxErrorException, VariableInitializationException, DisplayException, VariableDeclarationException {
-            ASTNode condition = null;
-            List<ASTNode> statements = new ArrayList<>();
+            ASTNode condition;
             if(match(Token.Type.While)) {
                 condition = parseCondition();
+                List<ASTNode> whileStatements = new ArrayList<>();
                 if(match(Token.Type.BeginWhile)) {
                     while (!match(Token.Type.EndWhile)) {
-                        if (match(Token.Type.Print)) {
-                            DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
-                            statements.add(displayNode);
-                        } else if (match(Token.Type.Identifier)) {
-                            if (match(Token.Type.Assign)) {
-                                currentTokenIndex -= 2;
-                                statements.add(reinitializeVariable(variableDeclarationsNode));
-                            }
-                        } else if (match(Token.Type.Scan)) {
-                            currentTokenIndex--;
-                            statements.add(scanFunction(variableDeclarationsNode));
-                        } else if(match(Token.Type.If)) {
-                            currentTokenIndex--;
-                            statements.add(conditionalStatements(variableDeclarationsNode));
-                        } else if (match(Token.Type.While)) {
-                            currentTokenIndex--;
-                            statements.add(parseIterative(variableDeclarationsNode));
-                        } else if (match(Token.Type.Break)) {
-                            statements.add(new BreakNode());
-                        } else {
-                            throw new SyntaxErrorException("ERROR: Invalid statement inside WHILE block.");
-                        }
+                        parseIterativeStatements(variableDeclarationsNode, whileStatements);
                     }
+                } else {
+                    throw new SyntaxErrorException("ERROR: Missing BEGIN WHILE token after condition statement.");
+                }
+                return new WhileLoopNode(condition, whileStatements);
+            } else if(match(Token.Type.For)) {
+                if(match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(")) {
+                    ASTNode initialization = reinitializeVariable(variableDeclarationsNode);
+                    if (!match(Token.Type.Comma)) {
+                        throw new SyntaxErrorException("ERROR: Missing comma after initialization statement.");
+                    }
+
+                    condition = expressionHandler();
+                    if (!match(Token.Type.Comma)) {
+                        throw new SyntaxErrorException("ERROR: Missing comma after condition statement.");
+                    }
+
+                    ASTNode initializedUpdate = reinitializeVariable(variableDeclarationsNode);
+
+                    if(match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals(")")) {
+                        List<ASTNode> forStatements = new ArrayList<>();
+                        if(match(Token.Type.BeginFor)) {
+                            while (!match(Token.Type.EndFor)) {
+                                parseIterativeStatements(variableDeclarationsNode, forStatements);
+                            }
+                        } else {
+                            throw new SyntaxErrorException("ERROR: Missing BEGIN FOR token after condition statement.");
+                        }
+                        forStatements.add(initializedUpdate);
+                        return new ForLoopNode(initialization, condition, forStatements);
+                    } else {
+                        throw new SyntaxErrorException("ERROR: Missing closing parenthesis for FOR loop statement.");
+                    }
+                } else {
+                    throw new SyntaxErrorException("ERROR: Missing opening parenthesis for FOR loop statement.");
                 }
             }
-            return new IterativeNode(condition, statements);
+            return null;
+        }
+
+
+
+        private void parseIterativeStatements(VariableDeclarationsNode variableDeclarationsNode, List<ASTNode> statements) throws VariableDeclarationException, SyntaxErrorException, VariableInitializationException, DisplayException {
+            if (match(Token.Type.Print)) {
+                DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
+                statements.add(displayNode);
+            } else if (match(Token.Type.Identifier)) {
+                if (match(Token.Type.Assign)) {
+                    currentTokenIndex -= 2;
+                    statements.add(reinitializeVariable(variableDeclarationsNode));
+                }
+            } else if (match(Token.Type.Scan)) {
+                currentTokenIndex--;
+                statements.add(scanFunction(variableDeclarationsNode));
+            } else if(match(Token.Type.If)) {
+                currentTokenIndex--;
+                statements.add(conditionalStatements(variableDeclarationsNode));
+            } else if (match(Token.Type.While)) {
+                currentTokenIndex--;
+                statements.add(parseIterative(variableDeclarationsNode));
+            } else if (match(Token.Type.For)) {
+                currentTokenIndex--;
+                statements.add(parseIterative(variableDeclarationsNode));
+            } else if (match(Token.Type.Break)) {
+                statements.add(new BreakNode());
+            } else {
+                throw new SyntaxErrorException("ERROR: Invalid statement inside WHILE block.");
+            }
         }
 
     /* *********************************** END ************************************ */
