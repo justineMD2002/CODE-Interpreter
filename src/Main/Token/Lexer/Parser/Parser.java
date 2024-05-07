@@ -19,6 +19,7 @@
         private final SymbolTable symbolTable = new SymbolTable();
         private int statementCount;
         private int errorCount;
+        private boolean isInsideLoop = false;
 
         public Parser(List<Token> tokens) {
             this.tokens = tokens;
@@ -341,12 +342,15 @@
                         currentTokenIndex--;
                         statements.add(scanFunction(variableDeclarationsNode));
                     } else if (match(Token.Type.If)) {
+                        isInsideLoop = false;
                         currentTokenIndex--;
                         statements.add(conditionalStatements(variableDeclarationsNode));
                     } else if(match(Token.Type.While)){
+                        isInsideLoop = true;
                         currentTokenIndex--;
                         statements.add(parseIterative(variableDeclarationsNode));
                     } else if(match(Token.Type.For)) {
+                        isInsideLoop = true;
                         currentTokenIndex--;
                         statements.add(parseIterative(variableDeclarationsNode));
                     } else {
@@ -554,10 +558,14 @@
                     } else if(match(Token.Type.For)) {
                         currentTokenIndex--;
                         ifStatements.add(parseIterative(variableDeclarationsNode));
-                    } else if (match(Token.Type.Break)) {
-                        List<Token> subTokens = tokens.subList(0, currentTokenIndex+1);
-                        if(subTokens.stream().noneMatch(token -> token.getType() == Token.Type.While)) {
-                            throw new SyntaxErrorException("ERROR: BREAK statement found outside of WHILE block.");
+                    } else if (match(Token.Type.Continue)) {
+                         if(!isInsideLoop) {
+                             throw new SyntaxErrorException("ERROR: CONTINUE statement found outside of LOOP block.");
+                         }
+                         ifStatements.add(new ContinueNode());
+                     } else if (match(Token.Type.Break)) {
+                        if(!isInsideLoop) {
+                            throw new SyntaxErrorException("ERROR: BREAK statement found outside of LOOP block.");
                         }
                         ifStatements.add(new BreakNode());
                     } else {
@@ -645,6 +653,8 @@
             } else if (match(Token.Type.For)) {
                 currentTokenIndex--;
                 statements.add(parseIterative(variableDeclarationsNode));
+            } else if(match(Token.Type.Continue)) {
+                statements.add(new ContinueNode());
             } else if (match(Token.Type.Break)) {
                 statements.add(new BreakNode());
             } else {

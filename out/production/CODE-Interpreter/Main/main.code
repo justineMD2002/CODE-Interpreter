@@ -1,11 +1,12 @@
-# this is a sample program in CODE
 BEGIN CODE
-    INT x, y, z=5
-    CHAR a_1='n'
-    BOOL t="TRUE"
-    x=y=4
-    a_1='c'
-    # this is a comment
-    DISPLAY: x & t & z & $ & a_1 & [$] & "last" &
-    DISPLAY: "Hello World"
+INT a=100, b=200, c=300, x, y, z, i, j
+
+
+
+WHILE(a < 500)
+BEGIN WHILE
+    CONTINUE
+END WHILE
+
+    DISPLAY: b
 END CODE

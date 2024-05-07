@@ -37,6 +37,6 @@ public class Token {
       NotEqual, Assign, And, Or, Not, Identifier, BeginContainer, EndContainer, BeginIf, EndIf,
       BeginWhile, EndWhile, Int, Bool, Char, Float, If, IfElse, Else, Equals, Comma, Print, 
       Parentheses, Concat, NewLine, BooleanLiteral, Scan, NumFloat,
-      CharLiteral, Colon, Escape, StringLiteral, Negation, While, Break, For, EndFor, BeginFor
+      CharLiteral, Colon, Escape, StringLiteral, Negation, While, Break, For, EndFor, BeginFor, Continue
   }
 }

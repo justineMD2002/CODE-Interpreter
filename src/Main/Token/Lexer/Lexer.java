@@ -310,6 +310,9 @@ public class Lexer {
             case "BREAK":
                 type = Token.Type.Break;
                 break;
+            case "CONTINUE":
+                type = Token.Type.Continue;
+                break;
             case "BEGIN":
                 if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 4 < input.length() && input.startsWith("CODE", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.BeginContainer, "BEGIN CODE", tokenStartPos));

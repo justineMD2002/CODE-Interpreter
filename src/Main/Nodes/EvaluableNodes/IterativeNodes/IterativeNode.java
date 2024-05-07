@@ -3,10 +3,7 @@ package Main.Nodes.EvaluableNodes.IterativeNodes;
 import Main.ExceptionHandlers.BreakException;
 import Main.ExceptionHandlers.VariableDeclarationException;
 import Main.ExceptionHandlers.VariableInitializationException;
-import Main.Nodes.ASTNodes.ASTNode;
-import Main.Nodes.ASTNodes.BreakNode;
-import Main.Nodes.ASTNodes.EvaluableNode;
-import Main.Nodes.ASTNodes.LiteralNode;
+import Main.Nodes.ASTNodes.*;
 import Main.Nodes.EvaluableNodes.VariableNode;
 import Main.Nodes.ExpressionNodes.ExpressionNode;
 import Main.Nodes.SymbolTable;
@@ -41,6 +38,8 @@ public abstract class IterativeNode extends EvaluableNode {
                         evaluableNode.evaluate(symbolTable);
                     } else if(statement instanceof BreakNode) {
                         throw new BreakException();
+                    } else if(statement instanceof ContinueNode) {
+                        break;
                     }
                 }
                 conditionResult = updateCondition(condition, symbolTable);
