@@ -12,11 +12,11 @@ b3 = "TRUE"
 a = 20
 b = c
 i = c
-c = a + b
+c = a +
 ch1 = 'A'
 DISPLAY: "Enter x: "
 SCAN: x
-
+#ajsdjasjdas
 #ajsdjasjdas
 FOR (y = 0, y < x, y = y+1)
 BEGIN FOR

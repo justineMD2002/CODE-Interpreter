@@ -2,7 +2,7 @@
 # asdasda
 # asdjasjkda
 BEGIN CODE
-INT a=100, b=200, c=300, x, y, z, i, 
+INT a=100, b=200, c=300, x, y, z, i, j
 CHAR ch1, ch2, ch3
 FLOAT f1, f2, f3
 BOOL b1, b2, b3
@@ -12,11 +12,11 @@ b3 = "TRUE"
 a = 20
 b = c
 i = c
-c = a + b
+c = a +
 ch1 = 'A'
 DISPLAY: "Enter x: "
 SCAN: x
-
+#ajsdjasjdas
 #ajsdjasjdas
 FOR (y = 0, y < x, y = y+1)
 BEGIN FOR

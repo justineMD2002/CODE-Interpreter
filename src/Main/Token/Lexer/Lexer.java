@@ -22,12 +22,6 @@ public class Lexer {
         while (currentPos < input.length()) {
             int tokenStartPos = currentPos;
             char lookahead = input.charAt(currentPos);
-            if(currentPos + 1 < input.length() && lookahead == '\n') {
-                if(isBlankLine()) {
-                    Parser.statementCount++;
-                }
-                continue;
-            }
             if (Character.isWhitespace(lookahead)) {
                 currentPos++;
                 continue;
@@ -35,7 +29,6 @@ public class Lexer {
             switch (lookahead) {
                 case '#':
                     skipComment();
-                    Parser.statementCount++;
                     break;
                 case ':':
                 case '+':
