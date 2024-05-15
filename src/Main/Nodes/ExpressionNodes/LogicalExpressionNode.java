@@ -14,7 +14,8 @@ public class LogicalExpressionNode extends ExpressionNode {
 
     private final Token.Type operator;
 
-    public LogicalExpressionNode(ASTNode leftOperand, Token.Type operator, ASTNode rightOperand) {
+    public LogicalExpressionNode(ASTNode leftOperand, Token.Type operator, ASTNode rightOperand, int lineNumber) {
+        super(lineNumber);
         this.leftOperand = leftOperand;
         this.operator = operator;
         this.rightOperand = rightOperand;
@@ -36,7 +37,7 @@ public class LogicalExpressionNode extends ExpressionNode {
         return switch (getOperator()) {
             case And -> leftValue && rightValue;
             case Or -> leftValue || rightValue;
-            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator());
+            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator() + ". at line " + (getLineNumber()+1));
         };
     }
 
@@ -44,7 +45,7 @@ public class LogicalExpressionNode extends ExpressionNode {
         if (Objects.requireNonNull(getOperator()) == Token.Type.Not) {
             return !operand;
         }
-        throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator());
+        throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator() + ". at line " + (getLineNumber()+1));
     }
 
     @Override
@@ -70,14 +71,14 @@ public class LogicalExpressionNode extends ExpressionNode {
             } else {
                 String leftSimpleName = leftValue.getClass().getSimpleName().equals("String") ? "BOOL" : leftValue.getClass().getSimpleName();
                 String rightSimpleName = rightValue.getClass().getSimpleName().equals("String") ? "BOOL" : rightValue.getClass().getSimpleName();
-                throw new IllegalArgumentException("ERROR: Unsupported operand types: " + leftSimpleName + " and " + rightSimpleName);
+                throw new IllegalArgumentException("ERROR: Unsupported operand types: " + leftSimpleName + " and " + rightSimpleName + ". at line " + (getLineNumber()+1));
             }
         } else {
             if (leftValue instanceof Boolean) {
                 boolean boolResult = evaluateBooleanExpression((Boolean) leftValue);
                 return boolResult ? new LiteralNode("TRUE") : new LiteralNode("FALSE");
             } else {
-                throw new IllegalArgumentException("ERROR: Unary operation can only be applied to boolean types.");
+                throw new IllegalArgumentException("ERROR: Unary operation can only be applied to boolean types. at line " + (getLineNumber()+1));
             }
         }
     }

@@ -1,6 +1,7 @@
 package Main.Nodes.EvaluableNodes.IterativeNodes;
 
 import Main.ExceptionHandlers.BreakException;
+import Main.ExceptionHandlers.ScannedInputException;
 import Main.ExceptionHandlers.VariableDeclarationException;
 import Main.ExceptionHandlers.VariableInitializationException;
 import Main.Nodes.ASTNodes.*;
@@ -13,10 +14,12 @@ import java.util.List;
 public abstract class IterativeNode extends EvaluableNode {
     private final ASTNode condition;
     private final List<ASTNode> iterativeStatements;
+    private final int lineNumber;
 
-    public IterativeNode(ASTNode condition, List<ASTNode> iterativeStatements) {
+    public IterativeNode(ASTNode condition, List<ASTNode> iterativeStatements, int lineNumber) {
         this.condition = condition;
         this.iterativeStatements = iterativeStatements;
+        this.lineNumber = lineNumber;
     }
 
     public ASTNode getCondition() {
@@ -27,8 +30,11 @@ public abstract class IterativeNode extends EvaluableNode {
         return iterativeStatements;
     }
 
+    public int getLineNumber() {
+        return lineNumber;
+    }
 
-    protected void evaluateLoop(SymbolTable symbolTable, ASTNode condition) throws VariableInitializationException, VariableDeclarationException {
+    protected void evaluateLoop(SymbolTable symbolTable, ASTNode condition) throws VariableInitializationException, VariableDeclarationException, ScannedInputException {
         boolean conditionResult = updateCondition(condition, symbolTable);
 
         while (conditionResult) {
@@ -54,11 +60,14 @@ public abstract class IterativeNode extends EvaluableNode {
             LiteralNode result = expressionNode.evaluateExpression(symbolTable);
             return result.getValue().equals("TRUE");
         } else if(condition instanceof VariableNode variableNode) {
+            if(!symbolTable.getInitializedVariables().containsKey(variableNode.getVariableName())) {
+                throw new VariableDeclarationException("ERROR: Variable " + variableNode.getVariableName() + " is not declared.", getLineNumber());
+            }
             LiteralNode result = symbolTable.getValue(variableNode.getVariableName());
             if(result.getValue() != null) {
                 return result.getValue().equals("TRUE");
             }
-            throw new VariableInitializationException("ERROR: Variable " + variableNode.getVariableName() + " not initialized.");
+            throw new VariableInitializationException("ERROR: Variable " + variableNode.getVariableName() + " not initialized.", getLineNumber());
         } else if(condition instanceof LiteralNode literalNode) {
             return literalNode.getValue().equals("TRUE");
         }

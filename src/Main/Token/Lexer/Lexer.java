@@ -1,5 +1,6 @@
 package Main.Token.Lexer;
 
+import Main.Token.Lexer.Parser.Parser;
 import Main.Token.Token;
 
 import java.util.ArrayList;
@@ -21,6 +22,12 @@ public class Lexer {
         while (currentPos < input.length()) {
             int tokenStartPos = currentPos;
             char lookahead = input.charAt(currentPos);
+            if(currentPos + 1 < input.length() && lookahead == '\n') {
+                if(isBlankLine()) {
+                    Parser.statementCount++;
+                }
+                continue;
+            }
             if (Character.isWhitespace(lookahead)) {
                 currentPos++;
                 continue;
@@ -28,6 +35,7 @@ public class Lexer {
             switch (lookahead) {
                 case '#':
                     skipComment();
+                    Parser.statementCount++;
                     break;
                 case ':':
                 case '+':
@@ -75,7 +83,17 @@ public class Lexer {
 //            printTokens(tokens);
         return tokens;
     }
-    
+
+    private boolean isBlankLine() {
+        currentPos++;
+        while (currentPos < input.length() && input.charAt(currentPos) != '\n') {
+            if (!Character.isWhitespace(input.charAt(currentPos))) {
+                return false;
+            }
+            currentPos++;
+        }
+        return true;
+    }
 
     public int getLineCount() {
         return lineCount;

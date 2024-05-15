@@ -1,12 +1,65 @@
+# hello world
+# asdasda
+# asdjasjkda
 BEGIN CODE
 INT a=100, b=200, c=300, x, y, z, i, j
+CHAR ch1, ch2, ch3
+FLOAT f1, f2, f3
+BOOL b1, b2, b3
+b1 = "TRUE"
+b2 = "FALSE"
+b3 = "TRUE"
+a = 20
+b = c
+i = c
+c = a + b
+ch1 = 'A'
+DISPLAY: "Enter x: "
+SCAN: x
 
-
-
-WHILE(a < 500)
-BEGIN WHILE
-    CONTINUE
-END WHILE
-
-    DISPLAY: b
+#ajsdjasjdas
+FOR (y = 0, y < x, y = y+1)
+BEGIN FOR
+	FOR(z = 0, z < x*2, z = z+1)
+	BEGIN FOR
+        IF(y == 0)
+        BEGIN IF
+            DISPLAY: "*"
+        END IF
+        ELSE
+        BEGIN IF
+            IF(z >= x-y AND z < x*2-(x-y))
+            BEGIN IF
+                DISPLAY: " "
+            END IF
+            ELSE
+            BEGIN IF
+                DISPLAY: "*"
+            END IF
+        END IF
+	END FOR
+    DISPLAY: $
+END FOR
+FOR (y = x-1, y >=0, y = y-1)
+BEGIN FOR
+	FOR(z = 0, z < x*2, z = z+1)
+	BEGIN FOR
+        IF(y == 0)
+        BEGIN IF
+            DISPLAY: "*"
+        END IF
+        ELSE
+        BEGIN IF
+            IF(z >= x-y AND z < x*2-(x-y))
+            BEGIN IF
+                DISPLAY: " "
+            END IF
+            ELSE
+            BEGIN IF
+                DISPLAY: "*"
+            END IF
+        END IF
+	END FOR
+    DISPLAY: $
+END FOR
 END CODE

@@ -1,5 +1,6 @@
 package Main.Nodes.EvaluableNodes;
 
+import Main.ExceptionHandlers.ScannedInputException;
 import Main.ExceptionHandlers.VariableDeclarationException;
 import Main.ExceptionHandlers.VariableInitializationException;
 import Main.Nodes.ASTNodes.EvaluableNode;
@@ -9,63 +10,64 @@ import Main.Nodes.ASTNodes.VariableDeclarationsNode;
 import Main.Nodes.AssignmentValidator;
 import Main.Nodes.SymbolTable;
 
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
 public class ScannerNode extends EvaluableNode {
     private final List<String> variableNames;
     private final VariableDeclarationsNode declarations;
+    private final int lineNumber;
 
-    public ScannerNode(List<String> variableNames, VariableDeclarationsNode declarations) {
+    public ScannerNode(List<String> variableNames, VariableDeclarationsNode declarations, int lineNumber) {
         this.variableNames = variableNames;
         this.declarations = declarations;
+        this.lineNumber = lineNumber;
     }
 
     public List<String> getVariableNames() {
         return variableNames;
     }
 
-    @Override
-    public void evaluate(SymbolTable symbolTable) {
-        try {
-            String[] userInputValues = getStrings(variableNames);
+    public VariableDeclarationsNode getDeclarations() {
+        return declarations;
+    }
 
-            for (int i = 0; i < variableNames.size(); i++) {
-                String variableName = variableNames.get(i);
-                String userInput = userInputValues[i].trim(); // Remove any leading/trailing whitespace
-                Object parsedValue = parseInput(userInput);
-                if (parsedValue != null) {
-                    LiteralNode valueNode = new LiteralNode(parsedValue);
-                    symbolTable.setValue(variableName, valueNode);
-                    String dataType = getDataType(variableName, declarations.getVariableDeclarations());
-                    AssignmentValidator.validateAssignmentType(dataType, variableName, valueNode);
-                } else {
-                    throw new InputMismatchException("ERROR: No input provided for variable '" + variableName + "'.");
-                }
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
+    @Override
+    public void evaluate(SymbolTable symbolTable) throws ScannedInputException, VariableInitializationException, VariableDeclarationException {
+        String[] userInputValues = getStrings(getVariableNames());
+
+        for (int i = 0; i < getVariableNames().size(); i++) {
+            String variableName = getVariableNames().get(i);
+            String userInput = userInputValues[i].trim(); // Remove any leading/trailing whitespace
+            Object parsedValue = parseInput(userInput);
+            if (parsedValue != null) {
+                LiteralNode valueNode = new LiteralNode(parsedValue);
+                symbolTable.setValue(variableName, valueNode);
+                String dataType = getDataType(variableName, getDeclarations().getVariableDeclarations());
+                AssignmentValidator.validateAssignmentType(dataType, variableName, valueNode, getLineNumber());
+            } else {
+                throw new ScannedInputException("ERROR: Invalid input provided for variable '" + variableName + "'.", getLineNumber());
             }
-        } catch ( InputMismatchException | VariableInitializationException e) {
-            System.err.println(e.getMessage());
-            System.exit(1);
         }
+
 
     }
 
-    private String[] getStrings(List<String> variableNames) {
+    private String[] getStrings(List<String> variableNames) throws ScannedInputException {
         Scanner scanner = new Scanner(System.in);
 
         // Prompt for input once, for all variables
         String inputLine = scanner.nextLine();
         String[] userInputValues = inputLine.split(",");
 
-        try {
-            if (userInputValues.length != variableNames.size()) {
-                throw new InputMismatchException("ERROR: The number of values provided does not match the number of variables.");
-            }
-        } catch (InputMismatchException i) {
-            System.err.println(i.getMessage());
-            System.exit(1);
+        if (userInputValues.length != variableNames.size()) {
+            throw new ScannedInputException("ERROR: The number of values provided does not match the number of variables.", getLineNumber());
         }
+
         return userInputValues;
     }
 
@@ -84,19 +86,13 @@ public class ScannerNode extends EvaluableNode {
     }
 
 
-    private String getDataType(String variableName, List<SingleVariableDeclaration> declarations) {
-        try {
-            for (SingleVariableDeclaration declaration : declarations) {
-                if (declaration.getVariableNames().stream().anyMatch(variableNode -> variableNode.getVariableName().equals(variableName))) {
-                    return declaration.getDataType();
-                }
+    private String getDataType(String variableName, List<SingleVariableDeclaration> declarations) throws VariableDeclarationException {
+        for (SingleVariableDeclaration declaration : declarations) {
+            if (declaration.getVariableNames().stream().anyMatch(variableNode -> variableNode.getVariableName().equals(variableName))) {
+                return declaration.getDataType();
             }
-            throw new VariableDeclarationException("ERROR: Variable '" + variableName + "' not declared.");
-        } catch (VariableDeclarationException v) {
-            System.err.println(v.getMessage());
-            System.exit(1);
         }
-        return null;
+        throw new VariableDeclarationException("ERROR: Variable '" + variableName + "' not declared.", getLineNumber());
     }
 
 

@@ -12,7 +12,8 @@ public class ComparisonExpressionNode extends ExpressionNode {
 
     private final Token.Type operator;
 
-    public ComparisonExpressionNode(ASTNode leftOperand, Token.Type operator, ASTNode rightOperand) {
+    public ComparisonExpressionNode(ASTNode leftOperand, Token.Type operator, ASTNode rightOperand, int lineNumber) {
+        super(lineNumber);
         this.leftOperand = leftOperand;
         this.operator = operator;
         this.rightOperand = rightOperand;
@@ -45,7 +46,7 @@ public class ComparisonExpressionNode extends ExpressionNode {
         } else if(isBooleanString(leftValue) && isBooleanString(rightValue)) {
             return compareBooleans(Boolean.parseBoolean(leftValue.toString()), Boolean.parseBoolean(rightValue.toString()));
         } else {
-            throw new IllegalArgumentException("ERROR: Comparison operation can only be applied to numeric, character, and boolean types.");
+            throw new IllegalArgumentException("ERROR: Comparison operation can only be applied to same data types. at line " + (getLineNumber()+1));
         }
     }
 
@@ -57,7 +58,7 @@ public class ComparisonExpressionNode extends ExpressionNode {
             case GreaterEqual -> leftNum.doubleValue() >= rightNum.doubleValue();
             case Equals -> leftNum.doubleValue() == rightNum.doubleValue();
             case NotEqual -> leftNum.doubleValue() != rightNum.doubleValue();
-            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator());
+            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator() + ". at line " + (getLineNumber()+1));
         };
         return new LiteralNode(comparisonResult ? "TRUE" : "FALSE");
     }
@@ -66,7 +67,7 @@ public class ComparisonExpressionNode extends ExpressionNode {
         boolean comparisonResult = switch (getOperator()) {
             case Equals -> leftChar == rightChar;
             case NotEqual -> leftChar != rightChar;
-            default -> throw new IllegalArgumentException("ERROR: Cannot apply operation type to value of type Character");
+            default -> throw new IllegalArgumentException("ERROR: Cannot apply operation type to value of type Character. at line " + (getLineNumber()+1));
         };
         return new LiteralNode(comparisonResult ? "TRUE" : "FALSE");
     }
@@ -75,7 +76,7 @@ public class ComparisonExpressionNode extends ExpressionNode {
         boolean comparisonResult = switch (getOperator()) {
             case Equals -> leftBool == rightBool;
             case NotEqual -> leftBool != rightBool;
-            default -> throw new IllegalArgumentException("ERROR: Cannot apply operation type to value of type BOOL");
+            default -> throw new IllegalArgumentException("ERROR: Cannot apply operation type to value of type BOOL. at line " + (getLineNumber()+1));
         };
         return new LiteralNode(comparisonResult ? "TRUE" : "FALSE");
     }

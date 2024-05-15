@@ -4,7 +4,7 @@ import Main.ExceptionHandlers.VariableInitializationException;
 import Main.Nodes.ASTNodes.LiteralNode;
 
 public class AssignmentValidator {
-    public static void validateAssignmentType(String dataType, String variable, LiteralNode valueNode) throws VariableInitializationException {
+    public static void validateAssignmentType(String dataType, String variable, LiteralNode valueNode, int lineNumber) throws VariableInitializationException {
         if (valueNode != null) {
             Object assignedValue = valueNode.getValue();
             if (assignedValue != null) {
@@ -15,17 +15,17 @@ public class AssignmentValidator {
                             int intValue = Integer.parseInt(String.valueOf(assignedValue));
                             // The assigned value can be parsed as an int, so it matches the data type INT
                         } catch (NumberFormatException e) {
-                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' is not a valid integer.");
+                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' is not a valid integer.", lineNumber);
                         }
                     }
                     case "CHAR" -> {
                         if (!(assignedValue instanceof Character)) {
-                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' does not match data type CHAR.");
+                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' does not match data type CHAR.", lineNumber);
                         }
                     }
                     case "BOOL" -> {
                         if (!(assignedValue.equals("FALSE") || assignedValue.equals("TRUE"))) {
-                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' does not match data type BOOL.");
+                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' does not match data type BOOL.", lineNumber);
                         }
                     }
                     case "FLOAT" -> {
@@ -33,11 +33,11 @@ public class AssignmentValidator {
                             double floatValue = Double.parseDouble(String.valueOf(assignedValue));
                             // The assigned value can be parsed as a double, so it matches the data type FLOAT
                         } catch (NumberFormatException e) {
-                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' is not a valid float.");
+                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' is not a valid float.", lineNumber);
                         }
                     }
                     case null, default ->
-                            throw new VariableInitializationException("ERROR: Unsupported data type '" + dataType + "'.");
+                            throw new VariableInitializationException("ERROR: Unsupported data type '" + dataType + "'.", lineNumber);
                 }
             }
         }

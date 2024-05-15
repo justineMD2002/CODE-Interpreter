@@ -12,7 +12,8 @@ public class ArithmeticExpressionNode extends ExpressionNode {
 
     private final Token.Type operator;
 
-    public ArithmeticExpressionNode(ASTNode leftOperand, Token.Type operator, ASTNode rightOperand) {
+    public ArithmeticExpressionNode(ASTNode leftOperand, Token.Type operator, ASTNode rightOperand, int lineNumber) {
+        super(lineNumber);
         this.leftOperand = leftOperand;
         this.operator = operator;
         this.rightOperand = rightOperand;
@@ -46,7 +47,7 @@ public class ArithmeticExpressionNode extends ExpressionNode {
         } else {
             String leftSimpleName = leftValue.getClass().getSimpleName().equals("String") ? "BOOL" : leftValue.getClass().getSimpleName();
             String rightSimpleName = rightValue.getClass().getSimpleName().equals("String") ? "BOOL" : rightValue.getClass().getSimpleName();
-            throw new IllegalArgumentException("ERROR: Unsupported operand types: " + leftSimpleName + " and " + rightSimpleName);
+            throw new IllegalArgumentException("ERROR: Unsupported operand types: " + leftSimpleName + " and " + rightSimpleName + ". at line " + (getLineNumber()+1));
         }
 
     }
@@ -64,7 +65,7 @@ public class ArithmeticExpressionNode extends ExpressionNode {
             }
             case Divide -> {
                 if (rightValue == 0) {
-                    throw new ArithmeticException("ERROR: Division by zero");
+                    throw new ArithmeticException("ERROR: Division by zero. at line " + (getLineNumber()+1));
                 }
                 return leftValue / rightValue;
             }
@@ -75,7 +76,7 @@ public class ArithmeticExpressionNode extends ExpressionNode {
                 return leftValue % rightValue;
             }
             // Handle other operators if needed
-            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator());
+            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator() + ". at line " + (getLineNumber()+1));
         }
     }
 
@@ -95,18 +96,18 @@ public class ArithmeticExpressionNode extends ExpressionNode {
             }
             case Divide -> {
                 if (rightDouble == 0.0) {
-                    throw new ArithmeticException("ERROR: Division by zero");
+                    throw new ArithmeticException("ERROR: Division by zero. at line " + (getLineNumber()+1) );
                 }
                 return leftDouble / rightDouble;
             }
             case Modulo -> {
                 if (rightDouble == 0.0) {
-                    throw new ArithmeticException("ERROR: Division by zero");
+                    throw new ArithmeticException("ERROR: Division by zero. at line " + (getLineNumber()+1) );
                 }
                 return leftDouble % rightDouble;
             }
             // Handle other operators if needed
-            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator());
+            default -> throw new IllegalArgumentException("ERROR: Unsupported operator: " + getOperator() + ". at line " + (getLineNumber()+1));
         }
     }
 

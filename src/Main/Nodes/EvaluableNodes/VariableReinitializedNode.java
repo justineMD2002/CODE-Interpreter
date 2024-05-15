@@ -17,11 +17,13 @@ public class VariableReinitializedNode extends EvaluableNode {
     private final List<String> variableNames;
     private LiteralNode value;
     private final VariableDeclarationsNode declaredVariables;
+    private final int lineNumber;
 
-    public VariableReinitializedNode(List<String> variableNames, LiteralNode value, VariableDeclarationsNode declaredVariables) {
+    public VariableReinitializedNode(List<String> variableNames, LiteralNode value, VariableDeclarationsNode declaredVariables, int lineNumber) {
         this.variableNames = variableNames;
         this.value = value;
         this.declaredVariables = declaredVariables;
+        this.lineNumber = lineNumber;
     }
 
     public List<String> getVariableNames() {
@@ -40,6 +42,10 @@ public class VariableReinitializedNode extends EvaluableNode {
         return declaredVariables;
     }
 
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
     @Override
     public void evaluate(SymbolTable symbolTable) throws VariableDeclarationException, VariableInitializationException {
         LiteralNode currValue = getValue();
@@ -49,10 +55,10 @@ public class VariableReinitializedNode extends EvaluableNode {
                 value = expressionNode.evaluateExpression(symbolTable);
             } else if(value.getValue() instanceof VariableNode variableNode) {
                 String variableNodeName = variableNode.getVariableName();
-                if(symbolTable.getValue(variableNodeName) != null && symbolTable.getValue(variableNodeName).getValue() != null) {
-                    if (!symbolTable.getInitializedVariables().containsKey(variableNodeName)) {
-                        throw new VariableDeclarationException("ERROR: Variable '" + variableNodeName + "' not declared.");
-                    } else if(variableNode.getInitialValue() == null) {
+                if (!symbolTable.getInitializedVariables().containsKey(variableNodeName)) {
+                    throw new VariableDeclarationException("ERROR: Variable '" + variableNodeName + "' not declared.", getLineNumber());
+                } else if(symbolTable.getValue(variableNodeName) != null && symbolTable.getValue(variableNodeName).getValue() != null) {
+                     if(variableNode.getInitialValue() == null) {
                         value = symbolTable.getValue(variableNodeName);
                     } else if((int)variableNode.getInitialValue() == -1) {
                         if(variableNode.getInitialValue() instanceof Integer) {
@@ -62,7 +68,7 @@ public class VariableReinitializedNode extends EvaluableNode {
                         }
                     }
                 } else {
-                    throw new VariableDeclarationException("ERROR: Variable '" + variableNodeName + "' not initialized.");
+                    throw new VariableDeclarationException("ERROR: Variable '" + variableNodeName + "' not initialized.", getLineNumber());
                 }
 
             }
@@ -74,7 +80,7 @@ public class VariableReinitializedNode extends EvaluableNode {
                     .orElseThrow(() -> new NoSuchElementException("No value present"))
                     .getDataType();
 
-            AssignmentValidator.validateAssignmentType(dataType, varName, new LiteralNode(value.getValue()));
+            AssignmentValidator.validateAssignmentType(dataType, varName, new LiteralNode(value.getValue()), getLineNumber());
             symbolTable.setValue(varName, value);
         }
         setValue(currValue);
