@@ -38,12 +38,18 @@
 
         // Program -> BEGIN CODE VariableDeclarations ExecutableCode END CODE / ε.
         private ASTNode program() throws BeginContainerMissingException, EndContainerMissingException, SyntaxErrorException {
+            while(match(Token.Type.Comment) || match(Token.Type.BlankLine)) {
+                statementCount++;
+            }
             if(match(Token.Type.BeginContainer)) {
                 statementCount++;
                 ASTNode variableDeclarations = variableDeclarations();
                 ASTNode executableCode = executableCode((VariableDeclarationsNode) variableDeclarations);
                 if(match(Token.Type.EndContainer)) {
                     statementCount++;
+                    while(match(Token.Type.Comment) || match(Token.Type.BlankLine)) {
+                        statementCount++;
+                    }
                     if(tokens.size() > currentTokenIndex) {
                         throw new SyntaxErrorException("ERROR: Invalid token found after END CODE container.", getStatementCount());
                     }
@@ -66,8 +72,9 @@
         // Method to match token type. If the current token type matches the expected token type, increment the current token index.
         private boolean match(Token.Type expectedType) {
             if (currentTokenIndex < tokens.size() && tokens.get(currentTokenIndex).getType() == expectedType) {
-                if(currentTokenIndex + 1 == tokens.size() && tokens.get(currentTokenIndex).getType() != Token.Type.EndContainer) {
-                    System.err.println("ERROR: Missing END CODE container.");
+                if(currentTokenIndex + 1 == tokens.size() && tokens.get(currentTokenIndex).getType() != Token.Type.EndContainer &&
+                        (tokens.get(currentTokenIndex).getType() != Token.Type.Comment && tokens.get(currentTokenIndex).getType() != Token.Type.BlankLine)) {
+                    System.err.println("ERROR: Missing END CODE container. at line " + getStatementCount());
                     System.exit(1);
                 }
                 currentTokenIndex++;
@@ -213,6 +220,9 @@
 
         // VariableDeclaration -> DataType VariableList
         private ASTNode variableDeclaration() throws VariableDeclarationException, VariableInitializationException, SyntaxErrorException {
+            while(match(Token.Type.Comment) || match(Token.Type.BlankLine)) {
+                statementCount++;
+            }
             String dataType = tokens.get(currentTokenIndex).getText();
             ASTNode variableDeclaration = null;
             if (!dataType.isEmpty() && DataType()) {
@@ -329,6 +339,9 @@
             try {
                 List<ASTNode> statements = new ArrayList<>();
                 while(true) {
+                    while(match(Token.Type.BlankLine) || match(Token.Type.Comment)) {
+                        statementCount++;
+                    }
                     if (match(Token.Type.Print)) {
                         DisplayNode displayNode = (DisplayNode) displayHandler(variableDeclarationsNode);
                         statements.add(displayNode);
@@ -355,6 +368,7 @@
                     } else {
                         break;
                     }
+
                 }
 
                 if(DataType()) {
@@ -527,10 +541,10 @@
             if(match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(")) {
                 condition = expressionHandler();
                 if (!match(Token.Type.Parentheses) || !tokens.get(currentTokenIndex - 1).getText().equals(")")) {
-                    throw new SyntaxErrorException("ERROR: Missing closing parenthesis for structural condition statement.", getStatementCount());
+                    throw new SyntaxErrorException("ERROR: Missing closing parenthesis for condition statement.", getStatementCount());
                 }
             } else {
-                throw new SyntaxErrorException("ERROR: Missing opening parenthesis for structural condition statement.", getStatementCount());
+                throw new SyntaxErrorException("ERROR: Missing opening parenthesis for condition statement.", getStatementCount());
             }
             statementCount++;
             return condition;
@@ -572,7 +586,9 @@
                         }
                         statementCount++;
                         ifStatements.add(new BreakNode());
-                    } else {
+                    } else if(match(Token.Type.Comment) || match(Token.Type.BlankLine)) {
+                         statementCount++;
+                     } else {
                         throw new SyntaxErrorException("ERROR: Expected PRINT, SCAN, IF, WHILE, FOR, or BREAK statement inside IF block " +
                                 "but found " + tokens.get(currentTokenIndex).getType() + " token.\n" +
                                 "Either it is not an executable statement OR EndIf token is missing.", getStatementCount());
@@ -602,7 +618,7 @@
                     throw new SyntaxErrorException("ERROR: Missing BEGIN WHILE token after condition statement.", getStatementCount());
                 }
                 statementCount++;
-                return new WhileLoopNode(condition, whileStatements, getStatementCount());
+                return new WhileLoopNode(condition, whileStatements, getStatementCount()-1);
             } else if(match(Token.Type.For)) {
                 if(match(Token.Type.Parentheses) && tokens.get(currentTokenIndex-1).getText().equals("(")) {
                     ASTNode initialization = reinitializeVariable(variableDeclarationsNode);
@@ -613,7 +629,6 @@
 
                     condition = expressionHandler();
                     if (!match(Token.Type.Comma)) {
-                        statementCount--;
                         throw new SyntaxErrorException("ERROR: Missing comma after condition statement.", getStatementCount());
                     }
 
@@ -633,7 +648,7 @@
                         }
                         forStatements.add(initializedUpdate);
                         statementCount++;
-                        return new ForLoopNode(initialization, condition, forStatements, getStatementCount());
+                        return new ForLoopNode(initialization, condition, forStatements, getStatementCount()-1);
                     } else {
                         throw new SyntaxErrorException("ERROR: Missing closing parenthesis for FOR loop statement.", getStatementCount());
                     }
@@ -673,6 +688,8 @@
             } else if (match(Token.Type.Break)) {
                 statementCount++;
                 statements.add(new BreakNode());
+            } else if(match(Token.Type.Comment) || match(Token.Type.BlankLine)) {
+                statementCount++;
             } else {
                 throw new SyntaxErrorException("ERROR: Expected PRINT, SCAN, IF, WHILE, FOR, or BREAK statement inside loop block " +
                         "but found " + tokens.get(currentTokenIndex).getType() + " token.\n" +

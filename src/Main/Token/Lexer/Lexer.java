@@ -22,13 +22,23 @@ public class Lexer {
         while (currentPos < input.length()) {
             int tokenStartPos = currentPos;
             char lookahead = input.charAt(currentPos);
+            StringBuilder lineText = new StringBuilder();
+            int tempPos = currentPos;
+            while(tempPos < input.length() && input.charAt(tempPos) != '\n') {
+                lineText.append(input.charAt(tempPos));
+                tempPos++;
+            }
+            if(currentPos > 0 && lineText.toString().trim().isEmpty() && lookahead == '\n' && input.charAt(currentPos-1) == '\n') {
+                tokens.add(new Token(Token.Type.BlankLine, "\n", currentPos));
+            }
             if (Character.isWhitespace(lookahead)) {
                 currentPos++;
                 continue;
             }
             switch (lookahead) {
                 case '#':
-                    skipComment();
+                    skipComment(tokens, tokenStartPos);
+                    currentPos++;
                     break;
                 case ':':
                 case '+':
@@ -77,25 +87,17 @@ public class Lexer {
         return tokens;
     }
 
-    private boolean isBlankLine() {
-        currentPos++;
-        while (currentPos < input.length() && input.charAt(currentPos) != '\n') {
-            if (!Character.isWhitespace(input.charAt(currentPos))) {
-                return false;
-            }
-            currentPos++;
-        }
-        return true;
-    }
-
     public int getLineCount() {
         return lineCount;
     }
 
-    private void skipComment() {
+    private void skipComment(List<Token> tokens, int tokenStartPos) {
+        StringBuilder stringBuilder = new StringBuilder();
         while (currentPos < input.length() && input.charAt(currentPos) != '\n') {
+            stringBuilder.append(input.charAt(currentPos));
             currentPos++;
         }
+        tokens.add(new Token(Token.Type.Comment, stringBuilder.toString(), tokenStartPos));
     }
 
     private boolean isValidEscapeChar(char c) {

@@ -1,4 +1,10 @@
 # hello world
+
+
+
+
+
+
 # asdasda
 # asdjasjkda
 BEGIN CODE
@@ -12,12 +18,22 @@ b3 = "TRUE"
 a = 20
 b = c
 i = c
-c = a +
+c = a
 ch1 = 'A'
+
+
+
 DISPLAY: "Enter x: "
 SCAN: x
+
 #ajsdjasjdas
-#ajsdjasjdas
+
+
+
+#ajsdjasjdassadas
+
+
+
 FOR (y = 0, y < x, y = y+1)
 BEGIN FOR
 	FOR(z = 0, z < x*2, z = z+1)
@@ -31,17 +47,37 @@ BEGIN FOR
             IF(z >= x-y AND z < x*2-(x-y))
             BEGIN IF
                 DISPLAY: " "
+
+
             END IF
             ELSE
             BEGIN IF
+
+            #asdjklasjkdas
+
+
+
+            #asjkdkajsdas
+
                 DISPLAY: "*"
             END IF
+
+
+            #asdjklasjkdas
+                        #asjkdkajsdas
         END IF
+
+        #asdjklasjkdas
+                    #asjkdkajsdas
+
 	END FOR
     DISPLAY: $
 END FOR
 FOR (y = x-1, y >=0, y = y-1)
 BEGIN FOR
+
+
+
 	FOR(z = 0, z < x*2, z = z+1)
 	BEGIN FOR
         IF(y == 0)
@@ -57,9 +93,18 @@ BEGIN FOR
             ELSE
             BEGIN IF
                 DISPLAY: "*"
+
+
+
+                #asdjklasjkdas
+                            #asjkdkajsdas
             END IF
         END IF
 	END FOR
     DISPLAY: $
 END FOR
+
+
+#asdjklasjkdas
+            #asjkdkajsdas
 END CODE
