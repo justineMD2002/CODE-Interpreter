@@ -1,9 +1,7 @@
 package Main;
 
-import Main.Nodes.ASTNode;
-import Main.Nodes.ArithmeticExpressionNode;
-import Main.Nodes.LiteralNode;
-import Main.Nodes.ProgramNode;
+import Main.ExceptionHandlers.*;
+import Main.Nodes.ASTNodes.ProgramNode;
 import Main.Token.Lexer.Lexer;
 import Main.Token.Lexer.Parser.Parser;
 import Main.Token.Lexer.Parser.SemanticAnalyzer;
@@ -22,22 +20,29 @@ public class App {
             while ((line = reader.readLine()) != null) {
                 fileContent.append(line).append("\n");
             }
-            Lexer lexer = new Lexer(fileContent.toString());
-            List<Token> tokens = lexer.lex();
-            Parser parser = new Parser(tokens);
-            ASTNode parsedNode = parser.parse();
-//            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(tokens);
-//            semanticAnalyzer.analyze();
-            if (parsedNode instanceof ProgramNode programNode) {
-                programNode.displayOutput();
+            int errorCount = getErrorCount(fileContent);
+            if (errorCount == 0) {
+                System.out.println("\nNo errors found in CODE.");
             }
-            System.out.println();
         } catch (IOException e) {
             System.err.println("Error reading file:");
             e.printStackTrace();
         } catch (Exception e) {
-            System.err.println("Error parsing code:");
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
+    }
+
+    private static int getErrorCount(StringBuilder fileContent) throws BeginContainerMissingException, EndContainerMissingException, VariableInitializationException, SyntaxErrorException, BreakException, VariableDeclarationException, ScannedInputException {
+        Lexer lexer = new Lexer(fileContent.toString());
+        List<Token> tokens = lexer.lex();
+        int lines = lexer.getLineCount();
+        Parser parser = new Parser(tokens);
+        ProgramNode program = (ProgramNode) parser.parse();
+        if(Parser.getStatementCount() > lines) {
+            throw new SyntaxErrorException("ERROR: Cannot have more than one statement in a single line.");
+        }
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(program.getSymbolTable());
+        analyzer.analyze(program);
+        return parser.getErrorCount();
     }
 }

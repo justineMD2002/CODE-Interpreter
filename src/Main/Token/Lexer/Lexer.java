@@ -1,30 +1,44 @@
 package Main.Token.Lexer;
 
+import Main.Token.Lexer.Parser.Parser;
 import Main.Token.Token;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Lexer {
-    private String input;
+    private final String input;
     private int currentPos = 0;
+    private int lineCount;
 
     public Lexer(String input) {
         this.input = input;
+        lineCount = 0;
     }
 
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
+        lineCount = input.split("\n").length;
         while (currentPos < input.length()) {
             int tokenStartPos = currentPos;
             char lookahead = input.charAt(currentPos);
+            StringBuilder lineText = new StringBuilder();
+            int tempPos = currentPos;
+            while(tempPos < input.length() && input.charAt(tempPos) != '\n') {
+                lineText.append(input.charAt(tempPos));
+                tempPos++;
+            }
+            if(currentPos > 0 && lineText.toString().trim().isEmpty() && lookahead == '\n' && input.charAt(currentPos-1) == '\n') {
+                tokens.add(new Token(Token.Type.BlankLine, "\n", currentPos));
+            }
             if (Character.isWhitespace(lookahead)) {
                 currentPos++;
                 continue;
             }
             switch (lookahead) {
                 case '#':
-                    skipComment();
+                    skipComment(tokens, tokenStartPos);
+                    currentPos++;
                     break;
                 case ':':
                 case '+':
@@ -65,18 +79,25 @@ public class Lexer {
                     } else if (Character.isLetter(lookahead) || lookahead == '_') {
                         handleIdentifierOrKeyword(tokens, tokenStartPos);
                     } else {
-                        throw new RuntimeException("Unknown character '" + lookahead + "' at position " + currentPos);
+                        throw new RuntimeException("ERROR: Unknown character '" + lookahead + "' at position " + currentPos);
                     }
             }
         }
-        //printTokens(tokens);
+//            printTokens(tokens);
         return tokens;
     }
 
-    private void skipComment() {
+    public int getLineCount() {
+        return lineCount;
+    }
+
+    private void skipComment(List<Token> tokens, int tokenStartPos) {
+        StringBuilder stringBuilder = new StringBuilder();
         while (currentPos < input.length() && input.charAt(currentPos) != '\n') {
+            stringBuilder.append(input.charAt(currentPos));
             currentPos++;
         }
+        tokens.add(new Token(Token.Type.Comment, stringBuilder.toString(), tokenStartPos));
     }
 
     private boolean isValidEscapeChar(char c) {
@@ -102,10 +123,10 @@ public class Lexer {
                     currentPos += 2;
                     return;
                 } else {
-                    throw new RuntimeException("Unclosed or invalid character literal starting at position " + startPos);
+                    throw new RuntimeException("ERROR: Unclosed or invalid character literal starting at position " + startPos);
                 }
             } else {
-                throw new RuntimeException("Invalid character following '[' at position " + (startPos + 1));
+                throw new RuntimeException("ERROR: Invalid character following '[' at position " + (startPos + 1));
             }
         }
 
@@ -121,10 +142,10 @@ public class Lexer {
             if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\'') {
                 String charLiteral = charLiteralBuilder.toString();
                 tokens.add(new Token(Token.Type.CharLiteral, charLiteral, startPos));
-                currentPos += 2;
+                currentPos += 1;
                 return;
             } else {
-                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+                throw new RuntimeException("ERROR: Unclosed character literal starting at position " + startPos);
             }
         }
 
@@ -139,11 +160,15 @@ public class Lexer {
 
             if (currentPos + 1 < input.length() && input.charAt(currentPos + 1) == '\"') {
                 String charLiteral = charLiteralBuilder.toString();
-                tokens.add(new Token(Token.Type.BooleanLiteral, charLiteral, startPos));
-                currentPos += 2;
+                if(charLiteral.equals("TRUE") || charLiteral.equals("FALSE")) {
+                    tokens.add(new Token(Token.Type.BooleanLiteral, charLiteral, startPos));
+                } else {
+                    tokens.add(new Token(Token.Type.StringLiteral, charLiteral, startPos));
+                }
+                currentPos += 1;
                 return;
             } else {
-                throw new RuntimeException("Unclosed character literal starting at position " + startPos);
+                throw new RuntimeException("ERROR: Unclosed character literal starting at position " + startPos);
             }
         }
 
@@ -155,9 +180,9 @@ public class Lexer {
                 type = Token.Type.Plus;
                 break;
             case '-':
-                if(currentPos < input.length() && tokens.getLast().getType() == Token.Type.Num ||
+                if(currentPos < input.length() && (tokens.getLast().getType() == Token.Type.Num ||
                         tokens.getLast().getType() == Token.Type.NumFloat ||
-                        tokens.getLast().getType() == Token.Type.Identifier ||
+                        tokens.getLast().getType() == Token.Type.Identifier) ||
                         (tokens.getLast().getType() == Token.Type.Parentheses && tokens.getLast().getText().equals(")")) ) {
                     type = Token.Type.Minus;
                 }
@@ -168,12 +193,6 @@ public class Lexer {
             case '(':
             case ')':
                 type = Token.Type.Parentheses;
-                break;
-            case '[':
-                type = Token.Type.SquareBOpen;
-                break;
-            case ']':
-                type = Token.Type.SquareBClose;
                 break;
             case '&':
                 type = Token.Type.Concat;
@@ -188,7 +207,7 @@ public class Lexer {
                 type = Token.Type.Times;
                 break;
             default:
-                throw new RuntimeException("Unknown character '" + character + "' at position " + currentPos);
+                throw new RuntimeException("ERROR: Unknown character '" + character + "' at position " + currentPos);
         }
         tokens.add(new Token(type, Character.toString(character), startPos));
     }
@@ -202,11 +221,10 @@ public class Lexer {
             } else {
                 tokens.add(new Token(Token.Type.Greater, ">", tokenStartPos));
             }
-            currentPos++;
         } else {
             tokens.add(new Token(Token.Type.Greater, ">", tokenStartPos));
-            currentPos++;
         }
+        currentPos++;
     }
 
     private void handleLessToken(List<Token> tokens, int tokenStartPos) {
@@ -221,11 +239,10 @@ public class Lexer {
             } else {
                 tokens.add(new Token(Token.Type.Less, "<", tokenStartPos));
             }
-            currentPos++;
         } else {
             tokens.add(new Token(Token.Type.Less, "<", tokenStartPos));
-            currentPos++;
         }
+        currentPos++;
     }
 
     private void handleEqualsToken(List<Token> tokens, int tokenStartPos) {
@@ -237,11 +254,10 @@ public class Lexer {
             } else {
                 tokens.add(new Token(Token.Type.Assign, "=", tokenStartPos));
             }
-            currentPos++;
         } else {
             tokens.add(new Token(Token.Type.Assign, "=", tokenStartPos));
-            currentPos++;
         }
+        currentPos++;
     }
 
     private void handleNumberToken(List<Token> tokens, int tokenStartPos) {
@@ -252,7 +268,7 @@ public class Lexer {
             char currentChar = input.charAt(currentPos);
             if (currentChar == '.') {
                 if (hasDecimal) {
-                    throw new RuntimeException("Invalid floating-point number format at position " + currentPos);
+                    throw new RuntimeException("ERROR: Invalid floating-point number format at position " + currentPos);
                 }
                 hasDecimal = true;
             }
@@ -273,6 +289,10 @@ public class Lexer {
         Token.Type type;
 
         switch (identifier) {
+            case "TRUE":
+            case "FALSE":
+                throw new RuntimeException("ERROR: Invalid boolean literal value '" + identifier
+                        + "' at position " + tokenStartPos);
             case "AND":
                 type = Token.Type.And;
                 break;
@@ -300,42 +320,64 @@ public class Lexer {
             case "FLOAT":
                 type = Token.Type.Float;
                 break;
-            case "TRUE":
-            case "FALSE":
-                type = Token.Type.BooleanLiteral;
+            case "BREAK":
+                type = Token.Type.Break;
+                break;
+            case "CONTINUE":
+                type = Token.Type.Continue;
                 break;
             case "BEGIN":
-                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 4 < input.length() && input.substring(currentPos + 1, currentPos + 5).equals("CODE")) {
+                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 4 < input.length() && input.startsWith("CODE", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.BeginContainer, "BEGIN CODE", tokenStartPos));
                     currentPos += 5;
-                    return;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("IF", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.BeginIf, "BEGIN IF", tokenStartPos));
+                    currentPos += 3;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 5 < input.length() && input.startsWith("WHILE", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.BeginWhile, "BEGIN WHILE", tokenStartPos));
+                    currentPos+=6;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 3 < input.length() && input.startsWith("FOR", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.BeginFor, "BEGIN FOR", tokenStartPos));
+                    currentPos+=4;
                 }
-                type = Token.Type.BeginContainer;
-                break;
+                return;
             case "END":
-                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.substring(currentPos + 1, currentPos + 5).equals("CODE")) {
+                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("CODE", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.EndContainer, "END CODE", tokenStartPos));
                     currentPos += 5;
-                    return;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("IF", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.EndIf, "END IF", tokenStartPos));
+                    currentPos += 3;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 5 < input.length() && input.startsWith("WHILE", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.EndWhile, "END WHILE", tokenStartPos));
+                    currentPos+=6;
+                } else if(currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 3 < input.length() && input.startsWith("FOR", currentPos + 1)) {
+                    tokens.add(new Token(Token.Type.EndFor, "END FOR", tokenStartPos));
+                    currentPos+=4;
                 }
-                type = Token.Type.EndContainer;
-                break;
+                return;
             case "IF":
                 type = Token.Type.If;
                 break;
             case "ELSE":
-                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.substring(currentPos + 1, currentPos + 3).equals("IF")) {
+                if (currentPos < input.length() && input.charAt(currentPos) == ' ' && currentPos + 2 < input.length() && input.startsWith("IF", currentPos + 1)) {
                     tokens.add(new Token(Token.Type.IfElse, "ELSE IF", tokenStartPos));
                     currentPos += 3;
                     return;
                 }
                 type = Token.Type.Else;
                 break;
+            case "WHILE":
+                type = Token.Type.While;
+                break;
+            case "FOR":
+                type = Token.Type.For;
+                break;
             default:
                 if (Character.isLetter(identifier.charAt(0)) || identifier.charAt(0) == '_') {
                     type = Token.Type.Identifier;
                 } else {
-                    throw new RuntimeException("Invalid identifier '" + identifier + "' at position " + tokenStartPos);
+                    throw new RuntimeException("ERROR: Invalid identifier '" + identifier + "' at position " + tokenStartPos);
                 }
         }
         tokens.add(new Token(type, identifier, tokenStartPos));

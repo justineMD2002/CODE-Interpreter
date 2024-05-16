@@ -1,9 +1,9 @@
 package Main.Token;
 
 public class Token {
-  private Type tpe;
-  private String text;
-  private int startPos;
+  private final Type tpe;
+  private final String text;
+  private final int startPos;
 
   public Token(Type tpe, String text, int startPos) {
       this.tpe = tpe;
@@ -36,7 +36,8 @@ public class Token {
       Num, Plus, Times, Divide, Modulo, Minus, Greater, Less, GreaterEqual, LessEqual,
       NotEqual, Assign, And, Or, Not, Identifier, BeginContainer, EndContainer, BeginIf, EndIf,
       BeginWhile, EndWhile, Int, Bool, Char, Float, If, IfElse, Else, Equals, Comma, Print, 
-      Parentheses, SquareBOpen, SquareBClose, Concat, NewLine, BooleanLiteral, Scan, NumFloat,
-      CharLiteral, Colon, Escape, StringLiteral, Negation
+      Parentheses, Concat, NewLine, BooleanLiteral, Scan, NumFloat,
+      CharLiteral, Colon, Escape, StringLiteral, Negation, While, Break, For, EndFor, BeginFor, Continue,
+      Comment, BlankLine
   }
 }
