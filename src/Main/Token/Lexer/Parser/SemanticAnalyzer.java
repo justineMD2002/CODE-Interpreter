@@ -37,10 +37,12 @@ public class SemanticAnalyzer {
                     String variableName = variableNode.getVariableName();
                     switch (variableNode.getInitialValue()) {
                         case ExpressionNode expressionNode -> {
+                            // INT x = a+b
                             Object value = expressionNode.evaluateExpression(getSymbolTable()).getValue();
                             new VariableNode(variableName, value).evaluate(getSymbolTable());
                         }
                         case VariableNode varNode -> {
+                            // INT x = b
                             String varName = varNode.getVariableName();
                             LiteralNode initialValue;
                             if(!getSymbolTable().getInitializedVariables().containsKey(varName)) {
@@ -48,7 +50,7 @@ public class SemanticAnalyzer {
                             } else if(getSymbolTable().getValue(varName) == null || getSymbolTable().getValue(varName).getValue() == null) {
                                 throw new VariableInitializationException("ERROR: Variable " + varName + " is not initialized.", declarations.indexOf(declaration)+1);
                             } else if(varNode.getInitialValue() == null) {
-                                initialValue = new LiteralNode(getSymbolTable().getValue(varName).getValue());
+                                initialValue = getSymbolTable().getValue(varName);
                             } else if ((int) varNode.getInitialValue() == -1) {
                                 if (getSymbolTable().getValue(varName).getValue() instanceof Integer) {
                                     initialValue = new LiteralNode((int) getSymbolTable().getValue(varName).getValue()*-1);
@@ -64,6 +66,7 @@ public class SemanticAnalyzer {
                             new VariableNode(variableName, initialValue.getValue()).evaluate(getSymbolTable());
                         }
                         case LiteralNode literalNode -> {
+                            // INT x=100
                             AssignmentValidator.validateAssignmentType(dataType, variableNode.getVariableName(), literalNode, declarations.indexOf(declaration)+1);
                             new VariableNode(variableNode.getVariableName(), literalNode.getValue()).evaluate(getSymbolTable());
                         }

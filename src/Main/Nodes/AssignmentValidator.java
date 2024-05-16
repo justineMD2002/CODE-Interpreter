@@ -15,7 +15,7 @@ public class AssignmentValidator {
                             int intValue = Integer.parseInt(String.valueOf(assignedValue));
                             // The assigned value can be parsed as an int, so it matches the data type INT
                         } catch (NumberFormatException e) {
-                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' is not a valid integer.", lineNumber);
+                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' is not a valid INT.", lineNumber);
                         }
                     }
                     case "CHAR" -> {
@@ -33,7 +33,7 @@ public class AssignmentValidator {
                             double floatValue = Double.parseDouble(String.valueOf(assignedValue));
                             // The assigned value can be parsed as a double, so it matches the data type FLOAT
                         } catch (NumberFormatException e) {
-                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' is not a valid float.", lineNumber);
+                            throw new VariableInitializationException("ERROR: Assigned value for variable '" + variable + "' is not a valid FLOAT.", lineNumber);
                         }
                     }
                     case null, default ->

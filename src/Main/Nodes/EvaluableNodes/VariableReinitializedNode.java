@@ -2,7 +2,6 @@ package Main.Nodes.EvaluableNodes;
 
 import Main.ExceptionHandlers.VariableDeclarationException;
 import Main.ExceptionHandlers.VariableInitializationException;
-import Main.Nodes.ASTNodes.ASTNode;
 import Main.Nodes.ASTNodes.EvaluableNode;
 import Main.Nodes.ASTNodes.LiteralNode;
 import Main.Nodes.ASTNodes.VariableDeclarationsNode;

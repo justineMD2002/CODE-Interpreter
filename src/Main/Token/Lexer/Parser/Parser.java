@@ -396,6 +396,8 @@
                 dominoInitializedVariables.add(variableName);
                 initialValue = assignment();
                 if(initialValue != null) {
+                    // INT a,b,c,d
+                    // a=b=c=d=100
                     while (true) {
                         assert initialValue != null;
                         if (!initialValue.equals("continue")) break;
@@ -740,7 +742,6 @@
         }
         return comp;
     }
-
 
 
     private ASTNode comp() throws SyntaxErrorException, VariableInitializationException {

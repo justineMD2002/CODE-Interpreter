@@ -32,8 +32,6 @@ SCAN: x
 
 #ajsdjasjdassadas
 
-
-
 FOR (y = 0, y < x, y = y+1)
 BEGIN FOR
 	FOR(z = 0, z < x*2, z = z+1)
