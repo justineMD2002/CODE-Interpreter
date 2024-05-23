@@ -609,7 +609,6 @@
             ASTNode condition;
             if(match(Token.Type.While)) {
                 condition = parseCondition();
-                statementCount++;
                 List<ASTNode> whileStatements = new ArrayList<>();
                 if(match(Token.Type.BeginWhile)) {
                     statementCount++;
